@@ -66,9 +66,19 @@ html {
 label {
     margin: 0 10px 0 0
 }
+
+#video-bottom {
+	position: absolute;
+	bottom: 0px;
+}
+
 #localVideo {
-    height: 100%;
-    width: 100%;
+	position: absolute;
+    height: 300px;
+    width: 300px;
+	bottom: 0px;
+	left: 50%;
+	text-align: center;
     object-fit: cover;
     transition: opacity 1s;
     -moz-transform: scale(-1, 1);
@@ -76,6 +86,8 @@ label {
     -o-transform: scale(-1, 1);
     -webkit-transform: scale(-1, 1);
     transform: scale(-1, 1);
+}
+#localScreenContainer {
 }
 #videoContainer {
     border: 1px solid gray;
@@ -104,7 +116,7 @@ label {
 #confirm-join-div {
     z-index: 100;
     position: absolute;
-    top: 80%;
+    top: 5%;
     width: 100%;
     text-align: center;
 }
@@ -309,7 +321,4 @@ svg:hover {
 	width: 100%;
 	text-align: center;
 	color: #fff
-}
-#localScreenContainer {
-	display: none;
 }

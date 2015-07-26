@@ -3,13 +3,13 @@
 		<link rel="stylesheet" href="css/bootstrap.css">
         <link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="css/icons.css">
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+        <script src="js/latest.js"></script>		
     </head>
     <body>
         <div class="videoContainer">
-            <video id="localVideo" oncontextmenu="return false;"></video>
             <meter id="localVolume" class="volume" min="-45" max="-20" high="-25" low="-40"></meter>
         </div>
-        <div id="localScreenContainer" class="videoContainer"></div>
 		<div id="icons" class="active">
 			<svg id="mute-audio" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="-10 -10 68 68">
 			<title>title</title>
@@ -43,20 +43,25 @@
 			</svg>
 			-->
 		</div>			
-		<div class="container" id="remotes" name="remotes"></div>
+		<div class="container" id="remotes" name="remotes"></div>		
 		<div id="confirm-join-div" class="">
 			<div id="room-title">Start a room</div>
 			<form id="createRoom">
 				<input id="sessionInput"/>
 				<button disabled type="submit">Create it!</button>
 			</form>
-		</div>		
+		</div>
+        <div class="localScreenContainer">
+            <video id="localVideo" oncontextmenu="return false;"></video>
+		</div>
 		<footer>
 			<div id="subTitle"></div>
 		</footer>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-        <script src="js/latest.js"></script>
         <script>
+		
+			var mute_audio = false;
+			var mute_video = false;
+		
             // grab the room from the URL
             var room = location.search && location.search.split('?')[1];
 
@@ -117,17 +122,21 @@
                 var remotes = document.getElementById('remotes');
                 if (remotes) {
                     var container = document.createElement('div');
-                    container.className = 'videoContainer';
-                    container.id = 'container_' + webrtc.getDomId(peer);
+                    container.className = 'videoContainer col-lg-3 centered';
+                    container.id = 'remote_video_' + webrtc.getDomId(peer);
                     container.appendChild(video);
-
+					
                     // suppress contextmenu
                     video.oncontextmenu = function () { return false; };
 
                     // resize the video on click
-                    //video.onclick = function () {
-                    //    container.style.width = video.videoWidth + 'px';
-                    //    container.style.height = video.videoHeight + 'px';
+                    //container.ondblclick = function () {
+					//	var remote_html = $('#'+container.id).html();
+					//	var new_remote_html = remote_html.replace('<video ', '<video id="localVideo" ');
+					//	var local_html = $('#backgroundVideo').html();
+					//	var new_local_html = local_html.replace('id="localVideo"', '');
+					//	$('#backgroundVideo').html(new_remote_html);
+					//	$('#'+container.id).html(new_local_html);
                     //};
 
                     // show the remote volume
@@ -182,11 +191,13 @@
 
             // local volume has changed
             webrtc.on('volumeChange', function (volume, treshold) {
-                showVolume(document.getElementById('localVolume'), volume);
+				if(mute_audio == false) {
+					showVolume(document.getElementById('localVolume'), volume);
+				}
             });
             // remote volume has changed
             webrtc.on('remoteVolumeChange', function (peer, volume) {
-                showVolume(document.getElementById('volume_' + peer.id), volume);
+                //showVolume(document.getElementById('volume_' + peer.id), volume);
             });
 
             // local p2p/ice failure
@@ -213,8 +224,8 @@
             function setRoom(name) {
                 document.querySelector('form').remove();
                 //document.getElementById('room-title').innerText = 'Room: ' + name;
-				document.getElementById('room-title').innerText = '';
-                document.getElementById('subTitle').innerText =  'Link to join: ' + location.href;
+				$('#room-title').text('');
+				$('#subTitle').text('Link to join: ' + location.href);
                 $('body').addClass('active');
             }
 
@@ -267,5 +278,35 @@
                 }
             });
         </script>
+		
+		<script>			
+			$("#mute-audio").on("click", function() {
+				if(mute_audio == false) {
+					$("#mute-audio").css( "background-color", "red" );
+					mute_audio = true;
+					webrtc.mute();
+				} else {
+					$("#mute-audio").css( "background-color", "green" );
+					mute_audio = false;
+					webrtc.unmute();
+				}
+			});
+			$("#mute-video").on("click", function() {
+				if(mute_video == false) {
+					$("#mute-video").css( "background-color", "red" );
+					mute_video = true;
+					webrtc.pauseVideo();
+				} else {
+					console.log("enable-video");
+					$("#mute-video").css( "background-color", "green" );
+					mute_video = false;
+					webrtc.resumeVideo();
+				}
+			});			
+		</script>
+		
+		<script>
+			$('#localVideo').css({'left':'0px'});
+		</script>
     </body>
 </html>

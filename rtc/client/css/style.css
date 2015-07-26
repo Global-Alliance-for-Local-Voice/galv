@@ -25,6 +25,7 @@ body {
     -webkit-font-smoothing: antialiased;
     color: #272b2d;
     line-height: 1.5;
+	background-color: black;
 }
 h1,
 h2,
