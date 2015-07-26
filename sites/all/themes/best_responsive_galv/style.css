@@ -344,7 +344,7 @@ a:focus {
 #header {
   position: relative;
   background: #111 url("images/vintage.png");
-  margin-bottom: 30px;
+  /*margin-bottom: 30px;*/
 }
 
 #site-logo {
@@ -442,15 +442,11 @@ a:focus {
 
 /*styling*/
 #navigation {
-  position: absolute;
+  background-color: black;
   height: 50px;
-  top: 50%;
-  right: 15px;
-  margin-top: -16px;
 }
 
 #navigation #main-menu > ul > li:hover > ul, #main-menu > ul li.sfHover > ul {
-  top: 32px;
 }
 
 #navigation #main-menu > ul li li:hover ul, #main-menu > ul li li.sfHover ul,
@@ -499,7 +495,6 @@ a:focus {
 
 /*drop-down styles*/
 #navigation #main-menu > ul ul {
-  position: absolute;
   nowhitespace: afterproperty;
   top: -999em;
   width: 200px;

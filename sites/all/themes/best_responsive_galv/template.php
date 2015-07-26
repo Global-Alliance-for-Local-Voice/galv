@@ -3,7 +3,7 @@
  * Implements hook_html_head_alter().
  * This will overwrite the default meta character type tag with HTML5 version.
  */
-function best_responsive_html_head_alter(&$head_elements) {
+function best_responsive_galv_html_head_alter(&$head_elements) {
   $head_elements['system_meta_content_type']['#attributes'] = array(
     'charset' => 'utf-8'
   );
@@ -12,7 +12,7 @@ function best_responsive_html_head_alter(&$head_elements) {
 /**
  * Insert themed breadcrumb page navigation at top of the node content.
  */
-function best_responsive_breadcrumb($variables) {
+function best_responsive_galv_breadcrumb($variables) {
   $breadcrumb = $variables['breadcrumb'];
   if (!empty($breadcrumb)) {
     // Use CSS to hide titile .element-invisible.
@@ -27,7 +27,7 @@ $breadcrumb[] = drupal_get_title();
 /**
  * Override or insert variables into the page template.
  */
-function best_responsive_preprocess_page(&$vars) {
+function best_responsive_galv_preprocess_page(&$vars) {
   if (isset($vars['main_menu'])) {
     $vars['main_menu'] = theme('links__system_main_menu', array(
       'links' => $vars['main_menu'],
@@ -65,7 +65,7 @@ function best_responsive_preprocess_page(&$vars) {
 /**
  * Duplicate of theme_menu_local_tasks() but adds clearfix to tabs.
  */
-function best_responsive_menu_local_tasks(&$variables) {
+function best_responsive_galv_menu_local_tasks(&$variables) {
   $output = '';
 
   if (!empty($variables['primary'])) {
@@ -86,7 +86,7 @@ function best_responsive_menu_local_tasks(&$variables) {
 /**
  * Override or insert variables into the node template.
  */
-function best_responsive_preprocess_node(&$variables) {
+function best_responsive_galv_preprocess_node(&$variables) {
   $node = $variables['node'];
   if ($variables['view_mode'] == 'full' && node_is_page($variables['node'])) {
     $variables['classes_array'][] = 'node-full';
@@ -94,7 +94,7 @@ function best_responsive_preprocess_node(&$variables) {
   $variables['date'] = t('!datetime', array('!datetime' =>  date('j F Y', $variables['created'])));
 }
 
-function best_responsive_page_alter($page) {
+function best_responsive_galv_page_alter($page) {
   // <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
   $viewport = array(
     '#type' => 'html_tag',
@@ -112,6 +112,6 @@ function best_responsive_page_alter($page) {
  * Add javascript files for front-page jquery slideshow.
  */
 if (drupal_is_front_page()) {
-  drupal_add_js(drupal_get_path('theme', 'best_responsive') . '/js/flexslider-min.js');
-  drupal_add_js(drupal_get_path('theme', 'best_responsive') . '/js/slide.js');
+  drupal_add_js(drupal_get_path('theme', 'best_responsive_galv') . '/js/flexslider-min.js');
+  drupal_add_js(drupal_get_path('theme', 'best_responsive_galv') . '/js/slide.js');
 }
