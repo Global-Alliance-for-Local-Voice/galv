@@ -6,11 +6,9 @@
     <body>
 		<!-- local cam containers -->
         <div class="videoContainer">
-			<div id="backgroundVideo"><video id="localVideo" oncontextmenu="return false;"></video></div>
             <meter id="localVolume" class="volume" min="-45" max="-20" high="-25" low="-40"></meter>
         </div>
-        <div id="localScreenContainer" class="videoContainer"></div>
-		
+			
 		<!-- control buttons -->
 		<div id="icons" class="active">
 			<svg id="mute-audio" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="-10 -10 68 68" style="background-color:green">
@@ -29,7 +27,8 @@
 			  <path class="on" transform="scale(0.6), translate(17,16)" d="M40 8H15.64l8 8H28v4.36l1.13 1.13L36 16v12.36l7.97 7.97L44 36V12c0-2.21-1.79-4-4-4zM4.55 2L2 4.55l4.01 4.01C4.81 9.24 4 10.52 4 12v24c0 2.21 1.79 4 4 4h29.45l4 4L44 41.46 4.55 2zM12 16h1.45L28 30.55V32H12V16z" fill="white"></path>
 			  <path class="off" transform="scale(0.6), translate(17,16)" d="M40 8H8c-2.21 0-4 1.79-4 4v24c0 2.21 1.79 4 4 4h32c2.21 0 4-1.79 4-4V12c0-2.21-1.79-4-4-4zm-4 24l-8-6.4V32H12V16h16v6.4l8-6.4v16z" fill="white"></path>
 			</svg>
-			<!--
+
+			<!--			
 			<svg id="fullscreen" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="-10 -10 68 68">
 			  <circle cx="24" cy="24" r="34">
 				<title>Enter fullscreen</title>
@@ -37,6 +36,7 @@
 			  <path class="on" transform="scale(0.8), translate(7,6)" d="M10 32h6v6h4V28H10v4zm6-16h-6v4h10V10h-4v6zm12 22h4v-6h6v-4H28v10zm4-22v-6h-4v10h10v-4h-6z" fill="white"></path>
 			  <path class="off" transform="scale(0.8), translate(7,6)" d="M14 28h-4v10h10v-4h-6v-6zm-4-8h4v-6h6v-4H10v10zm24 14h-6v4h10V28h-4v6zm-6-24v4h6v6h4V10H28z" fill="white"></path>
 			</svg>
+			
 			<svg id="hangup" class="hidden" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="-10 -10 68 68">
 			  <circle cx="24" cy="24" r="34">
 				<title>Hangup</title>
@@ -60,6 +60,10 @@
 		<footer>
 			<div id="subTitle"></div>
 		</footer>
+
+        <div id="localScreenContainer" class="videoContainer">
+			<video id="localVideo" oncontextmenu="return false;"></video>
+		</div>
 		
 		<!-- javascript -->
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
@@ -137,14 +141,14 @@
                     video.oncontextmenu = function () { return false; };
 
                     // resize the video on click
-                    container.ondblclick = function () {
-						var remote_html = $('#'+container.id).html();
-						var new_remote_html = remote_html.replace('<video ', '<video id="localVideo" ');
-						var local_html = $('#backgroundVideo').html();
-						var new_local_html = local_html.replace('id="localVideo"', '');
-						$('#backgroundVideo').html(new_remote_html);
-						$('#'+container.id).html(new_local_html);
-                    };
+                    //container.ondblclick = function () {
+					//	var remote_html = $('#'+container.id).html();
+					//	var new_remote_html = remote_html.replace('<video ', '<video id="localVideo" ');
+					//	var local_html = $('#backgroundVideo').html();
+					//	var new_local_html = local_html.replace('id="localVideo"', '');
+					//	$('#backgroundVideo').html(new_remote_html);
+					//	$('#'+container.id).html(new_local_html);
+                    //};
 
                     // show the remote volume
                     var vol = document.createElement('meter');
@@ -302,14 +306,14 @@
 				if(mute_video == false) {
 					$("#mute-video").css( "background-color", "red" );
 					mute_video = true;
-					webrtc.pauseVideo();
+					webrtc.pauseVideo();					
 				} else {
 					console.log("enable-video");
 					$("#mute-video").css( "background-color", "green" );
 					mute_video = false;
 					webrtc.resumeVideo();
 				}
-			});			
-		</script>
+			});
+		</script>	
     </body>
 </html>

@@ -3659,7 +3659,7 @@
                         l = [];
                     if ("datachannel" == s.descType ? (l.push("application"), l.push("1"), l.push("DTLS/SCTP"), c.sctp && c.sctp.forEach(function(e) {
                         l.push(e.number)
-                    })) : (l.push(s.media), l.push("1"), s.encryption && s.encryption.length > 0 || p.length > 0 ? l.push("RTP/SAVPF") : l.push("RTP/AVPF"), u.forEach(function(e) {
+                    })) : (l.push(s.media), l.push("1"), s.encryption && s.encryption.length > 0 || p.length > 0 ? l.push("UDP/TLS/RTP/SAVP") : l.push("UDP/TLS/RTP/SAVP"), u.forEach(function(e) {
                         l.push(e.id)
                     })), i.push("m=" + l.join(" ")), i.push("c=IN IP4 0.0.0.0"), s.bandwidth && s.bandwidth.type && s.bandwidth.bandwidth && i.push("b=" + s.bandwidth.type + ":" + s.bandwidth.bandwidth), "rtp" == s.descType && i.push("a=rtcp:1 IN IP4 0.0.0.0"), c) {
                         c.ufrag && i.push("a=ice-ufrag:" + c.ufrag), c.pwd && i.push("a=ice-pwd:" + c.pwd);
