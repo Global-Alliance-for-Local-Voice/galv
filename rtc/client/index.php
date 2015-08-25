@@ -1,6 +1,7 @@
 <html>
     <head>
 		<link rel="stylesheet" href="css/bootstrap.css">
+		<link rel="stylesheet" href="css/jquery-ui.css">
 		<link rel="stylesheet" href="css/icons.css">
     </head>
     <body>
@@ -47,7 +48,7 @@
 		</div>			
 		
 		<!-- remote peer cams -->
-		<div class="container" id="remotes" name="remotes"></div>
+		<div class="container" id="remotes" name="remotes"><ul id="sortable"></ul></div>
 		
 		<!-- room selection info -->
 		<div id="confirm-join-div" class="">
@@ -66,8 +67,9 @@
 		</div>
 		
 		<!-- javascript -->
-        <script src="js/jquery.min.js"></script>
-        <script src="js/latest.js"></script>
+		<script src="js/jquery.min.js"></script>
+		<script src="js/jquery-ui.min.js"></script>
+		<script src="js/latest.js"></script>
         <script>
 		
 			var mute_audio = false;
@@ -130,12 +132,14 @@
             // a peer video has been added
             webrtc.on('videoAdded', function (video, peer) {
                 console.log('video added', peer);
-                var remotes = document.getElementById('remotes');
+                var remotes = document.getElementById('sortable');
                 if (remotes) {
-                    var container = document.createElement('div');
-                    container.className = 'videoContainer col-lg-3 centered';
+                    var container = document.createElement('li');
+                    container.className = 'videoContainer col-lg-3 centered ui-state-default';
+					container.setAttribute("draggable", "true");
                     container.id = 'remote_video_' + webrtc.getDomId(peer);
                     container.appendChild(video);
+					$('#'+container.id).draggable();
 					
                     // suppress contextmenu
                     video.oncontextmenu = function () { return false; };
@@ -151,14 +155,14 @@
                     //};
 
                     // show the remote volume
-                    var vol = document.createElement('meter');
-                    vol.id = 'volume_' + peer.id;
-                    vol.className = 'volume';
-                    vol.min = -45;
-                    vol.max = -20;
-                    vol.low = -40;
-                    vol.high = -25;
-                    container.appendChild(vol);
+                    //var vol = document.createElement('meter');
+                    //vol.id = 'volume_' + peer.id;
+                    //vol.className = 'volume';
+                    //vol.min = -45;
+                    //vol.max = -20;
+                    //vol.low = -40;
+                    //vol.high = -25;
+                    //draggable.appendChild(vol);
                     
                     // show the ice connection state
                     //if (peer && peer.pc) {
@@ -193,8 +197,8 @@
             // a peer was removed
             webrtc.on('videoRemoved', function (video, peer) {
                 console.log('video removed ', peer);
-                var remotes = document.getElementById('remotes');
-                var el = document.getElementById(peer ? 'container_' + webrtc.getDomId(peer) : 'localScreenContainer');
+                var remotes = document.getElementById('sortable');
+                var el = document.getElementById(peer ? 'remote_video_' + webrtc.getDomId(peer) : 'localScreenContainer');
                 if (remotes && el) {
                     remotes.removeChild(el);
                 }
@@ -314,6 +318,12 @@
 					webrtc.resumeVideo();
 				}
 			});
+			$(function() {
+				$( "#sortable" ).sortable({
+				  revert: true
+				});
+				$( "ul, li" ).disableSelection();
+			});			
 		</script>	
     </body>
 </html>

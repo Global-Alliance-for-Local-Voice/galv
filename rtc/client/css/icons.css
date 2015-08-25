@@ -302,11 +302,12 @@ svg:hover {
 	left: 20px;
 }
 .videoContainer {
+	-webkit-user-drag: element;
 }
 .videoContainer video {
-	/**width: 350px;*/
-	/**height: 350px;*/
-    border: 1px solid white;
+	width: 250px;
+	height: 250px;
+	border: 1px solid white;
 }
 .volume {
 	position: absolute;
@@ -322,4 +323,7 @@ svg:hover {
 	width: 100%;
 	text-align: center;
 	color: #fff
+}
+#draggable { 
+	border: none;
 }
