@@ -1,3 +1,7 @@
+// vars for audio
+var mute_audio = false;
+var mute_video = false;
+
 // grab the room from the URL
 var room = location.search && location.search.split('?')[1];
 

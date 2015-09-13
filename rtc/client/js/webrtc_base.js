@@ -36,7 +36,7 @@
                     var t, n, u = this,
                         p = e || {}, l = this.config = {
                             //url: "https://"+document.location.hostname,
-							url: "https://galv.world",
+							url: "https://galv.world:443",
                             socketio: {},
                             connection: null,
                             debug: !1,

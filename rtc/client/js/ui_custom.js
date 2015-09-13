@@ -1,7 +1,4 @@
-$(document).ready(function() {
-	var mute_audio = false;
-	var mute_video = false;
-	
+$(document).ready(function() {	
 	/** mute audio button */
 	$("#mute-audio").on("click", function() {
 		if(mute_audio == false) {
