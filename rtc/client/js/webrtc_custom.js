@@ -222,3 +222,15 @@ button.click(function () {
 		
 	}
 });
+
+webrtc.on('joinedRoom', function () {
+	webrtc.sendDirectlyToAll("text chat", "chat", "");
+});
+
+webrtc.on('message', function(data){
+	if(data.type === 'chat'){
+		console.log('chat received',data);
+		$('#messages').append('<br>' + data.payload.nick + ':<br>' + data.payload.message);
+	}
+});
+

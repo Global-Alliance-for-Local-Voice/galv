@@ -327,3 +327,20 @@ svg:hover {
 #draggable { 
 	border: none;
 }
+#messages_container {
+	position: absolute;
+	right: 300px;
+	bottom: 0px;
+	width: 200px;
+	height: 400px;
+	background-color: white;
+}
+#messages {
+	height: 200px;
+}
+# send_text_container {
+	height: 200px;
+}
+#text  {
+	background-color: gray;
+}
