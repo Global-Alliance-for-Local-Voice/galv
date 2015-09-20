@@ -15,7 +15,7 @@ var webrtc = new SimpleWebRTC({
 	autoRequestMedia: true,
 	debug: false,
 	detectSpeakingEvents: true,
-	autoAdjustMic: false
+	autoAdjustMic: false,
 });
 
 // when it's ready, join if we got a room from the URL
@@ -195,11 +195,11 @@ if (room) {
 }
 
 var button = document.getElementById('screenShareButton'),
-	setButton = function (bool) {
-		button.innerText = bool ? 'share screen' : 'stop sharing';
-	};
+	//setButton = function (bool) {
+	//	button.innerText = bool ? 'share screen' : 'stop sharing';
+	//};
 if (!webrtc.capabilities.screenSharing) {
-	button.disabled = 'disabled';
+	//button.disabled = 'disabled';
 }
 webrtc.on('localScreenRemoved', function () {
 	setButton(true);
@@ -228,6 +228,7 @@ webrtc.on('joinedRoom', function () {
 });
 
 webrtc.on('message', function(data){
+	console.log("received message", data);
 	if(data.type === 'chat'){
 		console.log('chat received',data);
 		$('#messages').append('<br>' + data.payload.nick + ':<br>' + data.payload.message);
