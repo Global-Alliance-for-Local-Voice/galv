@@ -1,7 +1,7 @@
 // vars for audio
 var mute_audio = false;
 var mute_video = false;
-var remoteVideos = 0;
+var remote_videos = 0;
 
 
 // grab the room from the URL
@@ -13,7 +13,7 @@ var webrtc = new SimpleWebRTC({
 	// the id/element dom element that will hold "our" video
 	localVideoEl: 'localVideo',
 	// the id/element dom element that will hold remote videos
-	remoteVideosEl: '',
+	remotevideosEl: '',
 	// immediately ask for camera access
 	autoRequestMedia: true,
 	debug: false,
@@ -64,12 +64,12 @@ webrtc.on('localScreenRemoved', function (video) {
 /** remote videos not local video */
 webrtc.on('videoAdded', function (video, peer) {
 	//console.log('video added', peer);
-	//console.log("Number of videos " +  remoteVideos);
+	//console.log("Number of videos " +  remote_videos);
 	//window.alert("video added");
 	var remotes = document.getElementById('sortable');
 	if (remotes) {
-		//remoteVideos++;
-		//console.log("Number of videos", remoteVideos);
+		remote_videos++;
+		console.log("Number of videos", remote_videos);
 		var container = document.createElement('li');
 		container.className = 'videoContainer col-lg-3 centered ui-state-default';
 		container.setAttribute("draggable", "true");
@@ -134,7 +134,7 @@ webrtc.on('videoAdded', function (video, peer) {
 // a peer was removed
 webrtc.on('videoRemoved', function (video, peer) {
 	//console.log('video removed ', peer);
-	//remoteVideos--;
+	remote_videos--;
 	var remotes = document.getElementById('sortable');
 	var el = document.getElementById(peer ? 'remote_video_' + webrtc.getDomId(peer) : 'localScreenContainer');
 	if (remotes && el) {
