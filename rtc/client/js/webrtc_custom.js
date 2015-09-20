@@ -1,11 +1,12 @@
 // vars for audio
 var mute_audio = false;
 var mute_video = false;
+var remoteVideos = 0;
+
 
 // grab the room from the URL
 var room = location.search && location.search.split('?')[1];
 
-var remoteVideos = 0;
 
 // create our webrtc connection
 var webrtc = new SimpleWebRTC({
@@ -62,13 +63,13 @@ webrtc.on('localScreenRemoved', function (video) {
 
 /** remote videos not local video */
 webrtc.on('videoAdded', function (video, peer) {
-	console.log('video added', peer);
-	console.log("Number of videos " +  remoteVideos);
-	window.alert("video added");
+	//console.log('video added', peer);
+	//console.log("Number of videos " +  remoteVideos);
+	//window.alert("video added");
 	var remotes = document.getElementById('sortable');
 	if (remotes) {
-		remoteVideos++;
-		console.log("Number of videos", remoteVideos);
+		//remoteVideos++;
+		//console.log("Number of videos", remoteVideos);
 		var container = document.createElement('li');
 		container.className = 'videoContainer col-lg-3 centered ui-state-default';
 		container.setAttribute("draggable", "true");
@@ -132,8 +133,8 @@ webrtc.on('videoAdded', function (video, peer) {
 
 // a peer was removed
 webrtc.on('videoRemoved', function (video, peer) {
-	console.log('video removed ', peer);
-	remoteVideos--;
+	//console.log('video removed ', peer);
+	//remoteVideos--;
 	var remotes = document.getElementById('sortable');
 	var el = document.getElementById(peer ? 'remote_video_' + webrtc.getDomId(peer) : 'localScreenContainer');
 	if (remotes && el) {
@@ -201,34 +202,34 @@ if (room) {
 	});
 }
 
-var button = document.getElementById('screenShareButton'),
+//var button = document.getElementById('screenShareButton'),
 	//setButton = function (bool) {
 	//	button.innerText = bool ? 'share screen' : 'stop sharing';
 	//};
-if (!webrtc.capabilities.screenSharing) {
+//if (!webrtc.capabilities.screenSharing) {
 	//button.disabled = 'disabled';
-}
-webrtc.on('localScreenRemoved', function () {
-	setButton(true);
-});
+//}
+//webrtc.on('localScreenRemoved', function () {
+	//setButton(true);
+//});
 
-setButton(true);
+//setButton(true);
 
-button.click(function () {
-	if (webrtc.getLocalScreen()) {
-		webrtc.stopScreenShare();
-		setButton(true);
-	} else {
-		webrtc.shareScreen(function (err) {
-			if (err) {
-				setButton(true);
-			} else {
-				setButton(false);
-			}
-		});
-		
-	}
-});
+//button.click(function () {
+//	if (webrtc.getLocalScreen()) {
+//		webrtc.stopScreenShare();
+//		setButton(true);
+//	} else {
+//		webrtc.shareScreen(function (err) {
+//			if (err) {
+//				setButton(true);
+//			} else {
+//				setButton(false);
+//			}
+//		});
+//		
+//	}
+////});
 
 webrtc.on('joinedRoom', function () {
 	webrtc.sendDirectlyToAll("text chat", "chat", "");
