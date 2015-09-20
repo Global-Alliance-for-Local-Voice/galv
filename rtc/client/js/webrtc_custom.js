@@ -5,6 +5,8 @@ var mute_video = false;
 // grab the room from the URL
 var room = location.search && location.search.split('?')[1];
 
+var remoteVideos = 0;
+
 // create our webrtc connection
 var webrtc = new SimpleWebRTC({
 	// the id/element dom element that will hold "our" video
@@ -61,8 +63,12 @@ webrtc.on('localScreenRemoved', function (video) {
 /** remote videos not local video */
 webrtc.on('videoAdded', function (video, peer) {
 	console.log('video added', peer);
+	console.log("Number of videos " +  remoteVideos);
+	window.alert("video added");
 	var remotes = document.getElementById('sortable');
 	if (remotes) {
+		remoteVideos++;
+		console.log("Number of videos", remoteVideos);
 		var container = document.createElement('li');
 		container.className = 'videoContainer col-lg-3 centered ui-state-default';
 		container.setAttribute("draggable", "true");
@@ -127,6 +133,7 @@ webrtc.on('videoAdded', function (video, peer) {
 // a peer was removed
 webrtc.on('videoRemoved', function (video, peer) {
 	console.log('video removed ', peer);
+	remoteVideos--;
 	var remotes = document.getElementById('sortable');
 	var el = document.getElementById(peer ? 'remote_video_' + webrtc.getDomId(peer) : 'localScreenContainer');
 	if (remotes && el) {
