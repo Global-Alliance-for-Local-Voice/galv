@@ -36,7 +36,8 @@
                     var t, n, u = this,
                         p = e || {}, l = this.config = {
                             //url: "https://"+document.location.hostname,
-							url: "https://galv.world:443",
+							//url: "http://ec2-52-37-195-198.us-west-2.compute.amazonaws.com:50000",
+                            url: "http://localhost:50000",
                             socketio: {},
                             connection: null,
                             debug: !1,
@@ -93,7 +94,11 @@
                         u.testReadiness()
                     }), this.webrtc.on("message", function(e) {
                         u.connection.emit("message", e)
-                    }), this.webrtc.on("peerStreamAdded", this.handlePeerStreamAdded.bind(this)), this.webrtc.on("peerStreamRemoved", this.handlePeerStreamRemoved.bind(this)), this.config.adjustPeerVolume && (this.webrtc.on("speaking", this.setVolumeForAll.bind(this, this.config.peerVolumeWhenSpeaking)), this.webrtc.on("stoppedSpeaking", this.setVolumeForAll.bind(this, 1))), n.on("stunservers", function(e) {
+                    }), this.webrtc.on("peerStreamAdded", this.handlePeerStreamAdded.bind(this)), 
+                        this.webrtc.on("peerStreamRemoved", this.handlePeerStreamRemoved.bind(this)), 
+                        this.config.adjustPeerVolume && (this.webrtc.on("speaking", 
+                            this.setVolumeForAll.bind(this, this.config.peerVolumeWhenSpeaking)), 
+                        this.webrtc.on("stoppedSpeaking", this.setVolumeForAll.bind(this, 1))), n.on("stunservers", function(e) {
                         u.webrtc.config.peerConnectionConfig.iceServers = e, u.emit("stunservers", e)
                     }), n.on("turnservers", function(e) {
                         u.webrtc.config.peerConnectionConfig.iceServers = u.webrtc.config.peerConnectionConfig.iceServers.concat(e), u.emit("turnservers", e)
@@ -118,7 +123,10 @@
                             n = u.getRemoteVideoContainer();
                         t.oncontextmenu = function() {
                             return !1
-                        }, t.id = "localScreen", a(e, t), n && n.appendChild(t), u.emit("localScreenAdded", t), u.connection.emit("shareScreen"), u.webrtc.peers.forEach(function(e) {
+                        }, t.id = "localScreen", a(e, t), n && n.appendChild(t), 
+                        u.emit("localScreenAdded", t), 
+                        u.connection.emit("shareScreen"), 
+                        u.webrtc.peers.forEach(function(e) {
                             var t;
                             "video" === e.type && (t = u.webrtc.createPeer({
                                 id: e.id,

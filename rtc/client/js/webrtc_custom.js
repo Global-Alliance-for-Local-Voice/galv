@@ -186,8 +186,12 @@ if (room) {
 	setRoom(room);
 } else {
 	$('form').submit(function () {
-		var val = $('#sessionInput').val().toLowerCase().replace(/\s/g, '-').replace(/[^A-Za-z0-9_\-]/g, '');
+		//generates a random string
+		var val = Math.random().toString(36).slice(2);
+		//$('#sessionInput').val().toLowerCase().replace(/\s/g, '-').replace(/[^A-Za-z0-9_\-]/g, '');
+		
 		webrtc.createRoom(val, function (err, name) {
+			console.log(' created Room');
 			console.log(' create room cb', arguments);
 		
 			var newUrl = location.pathname + '?' + name;
