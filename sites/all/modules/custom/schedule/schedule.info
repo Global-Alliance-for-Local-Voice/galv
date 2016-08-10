@@ -1,0 +1,15 @@
+name = Scheduling
+description = Scheduling Module for WebRTC video chats
+package = GALV
+core = 7.x
+
+dependencies[] = entity
+dependencies[] = views
+dependencies[] = date
+dependencies[] = date_popup
+dependencies[] = references
+dependencies[] = conf_confirm
+
+
+files[] = schedule.controller.inc
+

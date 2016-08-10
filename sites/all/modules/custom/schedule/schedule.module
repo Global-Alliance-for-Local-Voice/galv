@@ -1,0 +1,381 @@
+<?php
+
+/**
+ * Implements hook_entity_info().
+ */
+function schedule_entity_info() {
+  $return = array(
+    'schedule' => array(
+    'label' => t('Schedule'),
+    'entity class' => 'Schedule',
+    'controller class' => 'ScheduleController',
+    'base table' => 'schedule',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'sid',
+      'bundle' => 'type',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+      'load hook' => 'schedule_load',
+      'view modes' => array(
+        'full' => array(
+          'label' => t('Default'),
+          'custom settings' => FALSE,
+        ),
+      ),
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+      'module' => 'schedule',
+      'access callback' => 'schedule_access',
+    ),
+  );
+  $return['schedule_type'] = array(
+    'label' => t('Schedule type'),
+    'entity class' => 'ScheduleType',
+    'controller class' => 'ScheduleTypeController',
+    'base table' => 'schedule_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'schedule',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'module' => 'schedule',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/structure/schedule-types',
+      'file' => 'schedule.admin.inc',
+      'controller class' => 'ScheduleTypeUIController',
+    ),
+    'access callback' => 'schedule_type_access',
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function schedule_entity_info_alter(&$entity_info) {
+  foreach (schedule_types() as $type => $info) {
+    $entity_info['schedule']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/structure/schedule-types/manage/%schedule_type',
+        'real path' => 'admin/structure/schedule-types/manage/' . $type,
+        'bundle argument' => 4,
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function schedule_menu() {
+  $items = array();
+
+  $items['schedule/add'] = array(
+    'title' => 'Add schedule',
+    'page callback' => 'schedule_admin_add_page',
+    'access arguments' => array('create schedule entities'),
+    'file' => 'schedule.admin.inc',
+    'type' => MENU_LOCAL_ACTION,
+    'tab_parent' => 'schedule',
+    'tab_root' => 'schedule',
+  );
+
+  $schedule_uri = 'schedule/%schedule';
+  $schedule_uri_argument_position = 1;
+
+  $items[$schedule_uri] = array(
+    'title callback' => 'entity_label',
+    'title arguments' => array('schedule', $schedule_uri_argument_position),
+    'page callback' => 'schedule_view',
+    'page arguments' => array($schedule_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('view', 'schedule', $schedule_uri_argument_position),
+    'file' => 'schedule.pages.inc',
+  );
+
+  $items[$schedule_uri . '/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+
+  $items[$schedule_uri . '/delete'] = array(
+    'title' => 'Delete schedule',
+    'title callback' => 'schedule_label',
+    'title arguments' => array($schedule_uri_argument_position),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('schedule_delete_form', $schedule_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'schedule', $schedule_uri_argument_position),
+    'file' => 'schedule.admin.inc',
+  );
+
+  $items[$schedule_uri . '/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('schedule_form', $schedule_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('edit', 'schedule', $schedule_uri_argument_position),
+    'file' => 'schedule.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  foreach (schedule_types() as $type => $info) {
+    $items['schedule/add/' . $type] = array(
+      'title' => 'Add schedule',
+      'page callback' => 'schedule_add',
+      'page arguments' => array(2),
+      'access callback' => 'entity_access',
+      'access arguments' => array('create', 'schedule', $type),
+      'file' => 'schedule.admin.inc',
+    );
+  }
+
+  $items['admin/structure/schedule-types/%schedule_type/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('schedule_type_form_delete_confirm', 4),
+    'access arguments' => array('administer schedule types'),
+    'weight' => 1,
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'schedule.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function schedule_permission() {
+  $permissions = array(
+    'administer schedule types' => array(
+      'title' => t('Administer schedule types'),
+      'description' => t('Allows users to configure schedule types and their fields.'),
+      'restrict access' => TRUE,
+    ),
+    'create schedule entities' => array(
+      'title' => t('Create schedules'),
+      'description' => t('Allows users to create schedules.'),
+      'restrict access' => TRUE,
+    ),
+    'view schedule entities' => array(
+      'title' => t('View schedules'),
+      'description' => t('Allows users to view schedules.'),
+      'restrict access' => TRUE,
+    ),
+    'edit any schedule entities' => array(
+      'title' => t('Edit any schedules'),
+      'description' => t('Allows users to edit any schedules.'),
+      'restrict access' => TRUE,
+    ),
+    'edit own schedule entities' => array(
+      'title' => t('Edit own schedules'),
+      'description' => t('Allows users to edit own schedules.'),
+      'restrict access' => TRUE,
+    ),
+  );
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_entity_property_info_alter().
+ */
+function schedule_entity_property_info_alter(&$info) {
+  $properties = &$info['schedule']['properties'];
+  $properties['created'] = array(
+    'label' => t("Date created"),
+    'type' => 'date',
+    'description' => t("The date the node was posted."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer nodes',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t("Date changed"),
+    'type' => 'date',
+    'schema field' => 'changed',
+    'description' => t("The date the node was most recently updated."),
+  );
+  $properties['uid'] = array(
+    'label' => t("Author"),
+    'type' => 'user',
+    'description' => t("The author of the schedule."),
+    'setter callback' => 'entity_property_verbatim_set',
+    'setter permission' => 'administer schedule entities',
+    'required' => TRUE,
+    'schema field' => 'uid',
+  );
+}
+
+/*******************************************************************************
+ ********************************* Schedule API's **********************************
+ ******************************************************************************/
+
+/**
+ * Access callback for schedule.
+ */
+function schedule_access($op, $schedule, $account = NULL, $entity_type = NULL) {
+  global $user;
+
+  if (!isset($account)) {
+    $account = $user;
+  }
+  switch ($op) {
+    case 'create':
+      return user_access('administer schedule entities', $account)
+          || user_access('create schedule entities', $account);
+    case 'view':
+      return user_access('administer schedule entities', $account)
+          || user_access('view schedule entities', $account);
+    case 'edit':
+      return user_access('administer schedule entities')
+          || user_access('edit any schedule entities')
+          || (user_access('edit own schedule entities') && ($schedule->uid == $account->uid));
+  }
+}
+
+/**
+ * Load a schedule.
+ */
+function schedule_load($sid, $reset = FALSE) {
+  $schedules = schedule_load_multiple(array($sid), array(), $reset);
+  return reset($schedules);
+
+  //Put new schedule type here?
+}
+
+/**
+ * Load multiple schedules based on certain conditions.
+ */
+function schedule_load_multiple($sids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('schedule', $sids, $conditions, $reset);
+}
+
+/**
+ * Save schedule.
+ */
+function schedule_save($schedule) {
+  entity_save('schedule', $schedule);
+  $a = 1;
+  /*
+drupal_mail('schedule','test', $to, $language, $params = array(), $from = NULL, $send = TRUE) {
+  $message = array(
+
+  );
+}
+  */
+}
+
+/**
+ * Delete single schedule.
+ */
+function schedule_delete($schedule) {
+  entity_delete('schedule', entity_id('schedule', $schedule));
+}
+
+/**
+ * Delete multiple schedules.
+ */
+function schedule_delete_multiple($schedule_ids) {
+  entity_delete_multiple('schedule', $schedule_ids);
+}
+
+
+/*******************************************************************************
+ ****************************** Schedule Type API's ********************************
+ ******************************************************************************/
+
+/**
+ * Access callback for schedule Type.
+ */
+function schedule_type_access($op, $entity = NULL) {
+  return user_access('administer schedule types');
+}
+
+/**
+ * Load schedule Type.
+ */
+function schedule_type_load($schedule_type) {
+  return schedule_types($schedule_type);
+}
+
+/**
+ * List of schedule Types.
+ */
+function schedule_types($type_name = NULL) {
+  $types = entity_load_multiple_by_name('schedule_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Save schedule type entity.
+ */
+function schedule_type_save($schedule_type) {
+  entity_save('schedule_type', $schedule_type);
+}
+
+/**
+ * Delete single case type.
+ */
+function schedule_type_delete($schedule_type) {
+  entity_delete('schedule_type', entity_id('schedule_type' ,$schedule_type));
+}
+
+/**
+ * Delete multiple case types.
+ */
+function schedule_type_delete_multiple($schedule_type_ids) {
+  entity_delete_multiple('schedule_type', $schedule_type_ids);
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function schedule_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'schedule'),
+  );
+}
+
+/**
+ * Implements hook_help().
+ */
+
+function schedule_help($path, $arg) {
+
+  switch ($path) {
+    //Help for Schedule types page.
+    case 'admin/structure/schedule-types':
+      return '<p>' . t('If autoselect isn\'t working  for the selected users field in schedule/add,
+  click on the field type on this page and resave the fields.') . '</p>';
+  }
+
+}
+
+/**
+ * Implements hook_mail().
+ */
+function schedule_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'email_sender':
+      $message['subject'] = $params['subject'];
+      $message['body'][] = $params['message'];
+      $message['headers']['Content-Type'] = 'text/html; charset=UTF-8; format=flowed';
+      break;
+  }
+
+
+}

@@ -1,0 +1,6 @@
+name = Confirm Conference
+description = Form that invitee's email connects to, to allow invitee to confirm whether or not he/she is attending WebRTC conference
+package = GALV
+core = 7.x
+
+files[] = conf_confirm.inc

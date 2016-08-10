@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function conf_confirm_menu() {
+  $items = array();
+
+  $items['conf_confirm/response'] = array(
+    'title' => 'Confirmation Form',
+    'description' => 'The Scheduling module\'s email invitation contains a link to this form, 
+   so that invitees can reply whether or not they can attend the WebRTC conference',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('conf_confirm_form'),
+    'access callback' => TRUE, //array('access content')
+    'file' => 'conf_confirm.inc'
+  );
+  return $items;
+}
