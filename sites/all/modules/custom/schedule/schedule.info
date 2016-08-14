@@ -7,7 +7,7 @@ dependencies[] = entity
 dependencies[] = views
 dependencies[] = date
 dependencies[] = date_popup
-dependencies[] = references
+dependencies[] = user_reference
 dependencies[] = conf_confirm
 
 

@@ -1,5 +1,10 @@
 <?php
 
+function schedule_install() {
+  schedule_update_7001();
+  schedule_update_7002();
+}
+
 /**
  * Implements hook_schema().
  */
