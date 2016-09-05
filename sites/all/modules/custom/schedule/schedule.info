@@ -8,6 +8,7 @@ dependencies[] = views
 dependencies[] = date
 dependencies[] = date_popup
 dependencies[] = user_reference
+dependencies[] = mimemail
 dependencies[] = conf_confirm
 
 

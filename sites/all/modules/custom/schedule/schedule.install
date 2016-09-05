@@ -113,17 +113,17 @@ function schedule_schema() {
 
 /**
  * Implements hook_update_N().
- * Add entity schedule_a_live_video_conference
+ * Add entity schedule_a_live_video_conference.
  */
 function schedule_update_7001() {
-  //Create entity schedule
+  // Create entity schedule.
   $entity_type = 'schedule';
   $entity = entity_create($entity_type, array('type' => 'schedule_a_live_video_conference'));
   $entity->title = "Video Conference";
   $entity->uid = 1;
   $entity->save();
 
-  //Create entity schedule type
+  // Create entity schedule type.
   $entity_type = new ScheduleType();
   $entity_type->label = "Schedule a Live Video Conference";
   $entity_type->description = "This schedule allows the user to schedule a live video conference with other members of the community.";
@@ -133,26 +133,22 @@ function schedule_update_7001() {
 
 /**
  * Implements hook_update_N().
- * Add fields for "Schedule a Live Video Conference" Schedule
+ * Add fields for "Schedule a Live Video Conference" Schedule.
  */
 function schedule_update_7002() {
-  //$return = array();
-
   module_load_include('inc', 'schedule', 'schedule_fields');
 
-  //create all the fields we are adding to our entity type.
+  // Create all the fields we are adding to our entity type.
   foreach (_schedule_installed_fields() as $field) {
     field_create_field($field);
   }
 
-  //create all the instances for our fields.
+  // Create all the instances for our fields.
   foreach (_schedule_installed_instances() as $instance) {
     $instance['entity_type'] = 'schedule';
     $instance['bundle'] = 'schedule_a_live_video_conference';
     field_create_instance($instance);
   }
-
-  //$return[] = array('success' => TRUE, 'query' => 'Created Schedule Entity fields.');
   return 'Created fields';
 }
 

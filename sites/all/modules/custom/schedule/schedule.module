@@ -132,12 +132,14 @@ function schedule_menu() {
 
   foreach (schedule_types() as $type => $info) {
     $items['schedule/add/' . $type] = array(
-      'title' => 'Add schedule',
+      'title' => 'Schedule a Live Video Conference',
       'page callback' => 'schedule_add',
       'page arguments' => array(2),
       'access callback' => 'entity_access',
       'access arguments' => array('create', 'schedule', $type),
       'file' => 'schedule.admin.inc',
+      'menu_name' => 'user-menu', // Add to user-menu.
+      'type' => MENU_NORMAL_ITEM,
     );
   }
 
@@ -252,8 +254,6 @@ function schedule_access($op, $schedule, $account = NULL, $entity_type = NULL) {
 function schedule_load($sid, $reset = FALSE) {
   $schedules = schedule_load_multiple(array($sid), array(), $reset);
   return reset($schedules);
-
-  //Put new schedule type here?
 }
 
 /**
@@ -268,14 +268,6 @@ function schedule_load_multiple($sids = array(), $conditions = array(), $reset =
  */
 function schedule_save($schedule) {
   entity_save('schedule', $schedule);
-  $a = 1;
-  /*
-drupal_mail('schedule','test', $to, $language, $params = array(), $from = NULL, $send = TRUE) {
-  $message = array(
-
-  );
-}
-  */
 }
 
 /**
@@ -357,7 +349,7 @@ function schedule_views_api() {
 function schedule_help($path, $arg) {
 
   switch ($path) {
-    //Help for Schedule types page.
+    // Help for Schedule types page.
     case 'admin/structure/schedule-types':
       return '<p>' . t('If autoselect isn\'t working  for the selected users field in schedule/add,
   click on the field type on this page and resave the fields.') . '</p>';
@@ -379,3 +371,5 @@ function schedule_mail($key, &$message, $params) {
 
 
 }
+
+

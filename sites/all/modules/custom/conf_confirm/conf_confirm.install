@@ -1,0 +1,68 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function conf_confirm_schema() {
+  $schema = array();
+
+  $schema['conference_confirmation'] = array(
+    'description' => 'The WebRTC conference confirmation table',
+    'fields' => array(
+      'token' => array(
+        'description' => 'The token that will be passed from the users email account to drupal when the user responds if they are attending the video conference',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'senders_uid' => array(
+        'description' => 'Uid of user setting up the WebRTC video conference',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'The title of the WebRTC conference',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp for when the conference is scheduled',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'recipients_uid' => array(
+        'description' => 'Uid of user invited to the WebRTC video conference',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'response' => array(
+        'description' => 'The invitees response for conference attendance (yes/no/maybe)',
+        'type' => 'varchar',
+        'length' => 60,
+      ),
+      'comment' => array(
+        'description' => 'The invitees comment.',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'responded' => array(
+        'description' => 'Shows if recipient has responded to invitation',
+        'type' => 'int',
+      ),
+      'time_responded' => array(
+        'description' => 'The Unix timestamp for when the recipient responded',
+        'type' => 'int',
+      ),
+      'sid' => array(
+        'description' => 'The primary key of the schedule entity',
+        'type' => 'int',
+        'unsigned' => TRUE,
+      ),
+    ),
+    'primary key' => array('token'),
+  );
+  return $schema;
+}

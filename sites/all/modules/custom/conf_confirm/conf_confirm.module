@@ -9,11 +9,25 @@ function conf_confirm_menu() {
   $items['conf_confirm/response'] = array(
     'title' => 'Confirmation Form',
     'description' => 'The Scheduling module\'s email invitation contains a link to this form, 
-   so that invitees can reply whether or not they can attend the WebRTC conference',
+                      so that invitees can reply whether or not they can attend the WebRTC conference',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('conf_confirm_form'),
-    'access callback' => TRUE, //array('access content')
-    'file' => 'conf_confirm.inc'
+    'access callback' => 'user_is_logged_in',
+    'file' => 'conf_confirm.inc',
   );
   return $items;
 }
+
+/**
+ * Implements hook_user_login().
+ */
+function conf_confirm_user_login(&$edit, $account) {
+  // Don't redirect on password reset.
+  $current_menu_item = menu_get_item();
+  if ($current_menu_item['path'] == 'user/reset/%/%/%') {
+    return;
+  }
+  // Redirect user to video conference confirmation page after login.
+  drupal_goto($_GET['destination']);
+}
+
