@@ -46,7 +46,6 @@ Click on the Field Type, which will be user reference, and re-save.  The admin w
 5) Get rid of 1 of the invitees select boxes.  (You should only have 5)
 6) Ask Michelle if I can make a nicer access denied page.
 7) Get rid of uid in selected users select box, and fix admin instructions about what to do if auto-complete is not working in select box.
-8) Program all of the authenticated user permissions for the scheduling module so admins won't have to configure them manually.
 9) Connect to Becca's WebRTC site
 10) Write new email to inviter (person requesting the conference) with invitees's responses, and add their responses to the inviter's entity page.  (This is the page that is created when the schedule is created.
     The address of this page is emailed to the inviter.)

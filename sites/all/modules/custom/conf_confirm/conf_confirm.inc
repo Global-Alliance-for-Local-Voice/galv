@@ -77,6 +77,7 @@ function conf_confirm_form($form, &$form_state) {
     );
   }
     return $form;
+
 }
 
 
@@ -126,4 +127,57 @@ function conf_confirm_form_submit($form, &$form_state) {
     ->condition('token', $token)
     ->execute();
   drupal_set_message('Your response has been saved.');
+
+
+  //Query to prepare to send invitee's response email to inviter.
+  $result = db_query("SELECT conference_confirmation.token as token, conference_confirmation.senders_uid as uid, conference_confirmation.created as created, conference_confirmation.recipients_uid as recipients_uid, schedule.title as title, schedule.sid as sid
+                      FROM conference_confirmation
+                      LEFT JOIN schedule ON schedule.sid = conference_confirmation.sid
+                      WHERE token = :token", array(':token' => $token))->fetch();
+
+  // Get user info for the inviter and the invitee.
+  $inviter = user_load($result->uid);
+  $recipient = user_load($result->recipients_uid);
+
+  //Get inviter's email
+  $email = $inviter->mail;
+  // Get invitee's response.
+  $response = arg(2);
+
+  switch ($response) {
+    case 1:
+      $responseString = t('yes');
+      break;
+    case 0:
+       $responseString = t('no');
+      break;
+    case 2:
+      $responseString = t('maybe');
+      break;
+  }
+
+ // Get schedule entity path for message
+  $text = $result->title;
+  $path = 'schedule/' . $result->sid;
+
+  $inviterMessage = $recipient->name;
+  $inviterMessage .= t(' has responded ');
+  $inviterMessage .= $responseString;
+  $inviterMessage .= t(' to your invitation to video conference: ');
+  $inviterMessage .= $result->title;
+  $inviterMessage .= '<div> You may view your invitation at: </div>';
+  $inviterMessage .= l($text,$path);
+
+  $params = array();
+  $params['subject'] = $recipient->name . t(' has responded to your invitation');
+  $params['message'] = $inviterMessage;
+
+  // Check if private message is being used.
+  if(module_exists('privatemsg')) {
+    privatemsg_new_thread(array($inviter), $params['subject'], $params['message']);
+  }
+  // Send email.
+  drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+
 }
+

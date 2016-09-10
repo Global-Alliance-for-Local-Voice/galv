@@ -152,6 +152,17 @@ function schedule_update_7002() {
   return 'Created fields';
 }
 
+/**
+ * Implements hook_update_N().
+ * Give authenticated users permissions for scheduling entity.
+ */
+function schedule_update_7003() {
+  $permissions = array('create schedule entities', 'view schedule entities', 'edit own schedule entities');
+  foreach(array('authenticated user') as $role_name) {
+    $role = user_role_load_by_name($role_name);
+    user_role_grant_permissions($role->rid, $permissions);
+  }
 
+}
 
 
