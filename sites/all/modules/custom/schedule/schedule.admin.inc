@@ -211,9 +211,11 @@ function schedule_form_submit($form, &$form_state) {
   $uids = array();
 
   foreach ($form_state['values']['field_users']['und'] as $key => $uid) {
-    $uids[$key] = $uid['uid'];
-  }
 
+    if (!is_null($uid['uid'])) {
+      $uids[$key] = $uid['uid'];
+    }
+  }
 
 
   //$accounts = user_load_multiple($uids = array());
