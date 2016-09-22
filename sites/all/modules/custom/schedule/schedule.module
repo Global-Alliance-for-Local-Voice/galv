@@ -373,4 +373,74 @@ function schedule_mail($key, &$message, $params) {
 
 }
 
+/**
+ * Implements hook_preprocess().
+ *
+ * Allows us to create hook_preprocess_schedule.
+ */
+function schedule_preprocess(&$variables, $hook) {
+  if (isset($variables['elements']['#entity_type'])) {
+    $function = __FUNCTION__ . '_' . $variables['elements']['#entity_type'];
+    if (function_exists($function)) {
+      $function($variables, $hook);
+    }
+  }
+}
 
+/**
+ * Implements hook_preprocess_schedule().
+ */
+function schedule_preprocess_schedule(&$variable) {
+
+  $variable['invitees'] = $variable['field_users'];// Make invitees an array that I create that array should be a key value mixture of the use rname adn the response.
+
+  $invited = array();
+
+  if (is_array($variable['invitees']) || $variable['invitees'] instanceof Traversable) {
+    foreach ($variable['invitees'] as $invitee) {
+
+
+      $result = db_query("SELECT title,recipients_uid, name, response, sid
+                        FROM conference_confirmation
+                        LEFT JOIN users ON uid = recipients_uid
+                        WHERE recipients_uid = :recipients_uid AND sid = :sid", array(
+        ':recipients_uid' => $invitee['uid'],
+        ':sid' => $variable['schedule']->sid
+      ))->fetch();
+
+      //Display responses with words not numbers.
+      if (is_null($result->response)) {
+        $result->response = 'has not responded.';
+      }
+
+      switch ($result->response) {
+        case "0":
+          $result->response = 'has responded no.';
+          break;
+        case "1":
+          $result->response = 'has responded yes.';
+          break;
+        case "2":
+          $result->response = 'has responded maybe';
+          break;
+      }
+
+      $invited[$result->response] = l($result->name, '/users/' . $result->name);
+    }
+  }
+  $variable['mypeople'] = $invited;
+
+}
+
+/**
+ * Implements hook_theme().
+ */
+function schedule_theme($existing, $type, $theme, $path) {
+  $t = 1;
+  return array(
+    'schedule' => array(
+      'variables' => array('element' => null),
+      'template' => 'schedule_template'
+    ),
+  );
+}

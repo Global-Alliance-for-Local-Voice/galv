@@ -46,6 +46,12 @@ function conf_confirm_form($form, &$form_state) {
 
   $checktoken = arg(3);
 
+  // Check if user has already responded.
+  $alreadyResponded = db_query("SELECT token, sid, response
+                      FROM conference_confirmation
+                      WHERE token = :token", array(':token' => $token))->fetch();
+  $inviteeResponded = $alreadyResponded->response;
+
   if($result->token != $checktoken) {
     $form['not_allowed'] = array(
       '#type' => 'markup',
@@ -54,7 +60,30 @@ function conf_confirm_form($form, &$form_state) {
     );
   }
 
+  if ($inviteeResponded != NULL) {
+    $form['info'] = array(
+      '#type' => 'markup',
+      '#markup' => 'Hello ' . $myuser->name . '. You have been invited to live video conference ' . $result->title . '  
+                    on ' . $nice_time . '. Your response is listed below. Please check your response, 
+                    provide any necessary comments, and submit this form to complete your confirmation.'
+    );
+    $form['response'] = array(
+      '#title' => 'Will you attend live video conference ' . $result->title . '?',
+      '#type' => 'radios',
+      '#options' => array(0 => 'no', 1 => 'yes', 2 => 'maybe'),
+      '#default_value' => $inviteeResponded,
+    );
+    $form['comment'] = array(
+      '#type' => 'textarea',
+      '#title' => 'Comments',
+    );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Submit to confirm'),
+    );
+  }
   else {
+
     $form['info'] = array(
       '#type' => 'markup',
       '#markup' => 'Hello ' . $myuser->name . '. You have been invited to live video conference ' . $result->title . '  
@@ -108,6 +137,12 @@ function conf_confirm_form_submit($form, &$form_state) {
 
   // Get token
   $token = arg(3);
+  // Check if response already exists.  If it does, then change drupal_set_message.
+  $responseExists = db_query("SELECT token, sid, time_responded
+                      FROM conference_confirmation
+                      WHERE token = :token", array(':token' => $token))->fetch();
+
+
   $responsetime = time();
 
   if($responsetime != '') {
@@ -117,67 +152,131 @@ function conf_confirm_form_submit($form, &$form_state) {
     $responded = 0;
   }
 
-  db_update('conference_confirmation') // Maybe write some sort of check if they change their response. (Like a confirmation message) I need some sort of check 5 minutes before.  Ask Michelle.
+  if ($responseExists->time_responded != NULL) {
+    db_update('conference_confirmation') // Maybe write some sort of check if they change their response. (Like a confirmation message) I need some sort of check 5 minutes before.  Ask Michelle.
     ->fields(array(
       'response' => $form_state['values']['response'],
       'comment' => $form_state['values']['comment'],
       'time_responded' => $responsetime,
       'responded' => $responded,
     ))
-    ->condition('token', $token)
-    ->execute();
-  drupal_set_message('Your response has been saved.');
+      ->condition('token', $token)
+      ->execute();
+    drupal_set_message('You have changed your previous response. Your new response has been saved.');
 
-
-  //Query to prepare to send invitee's response email to inviter.
-  $result = db_query("SELECT conference_confirmation.token as token, conference_confirmation.senders_uid as uid, conference_confirmation.created as created, conference_confirmation.recipients_uid as recipients_uid, schedule.title as title, schedule.sid as sid
+    //Query to prepare to send invitee's response email to inviter.
+    $result = db_query("SELECT conference_confirmation.token as token, conference_confirmation.response as response, conference_confirmation.senders_uid as uid, conference_confirmation.created as created, conference_confirmation.recipients_uid as recipients_uid, schedule.title as title, schedule.sid as sid
                       FROM conference_confirmation
                       LEFT JOIN schedule ON schedule.sid = conference_confirmation.sid
                       WHERE token = :token", array(':token' => $token))->fetch();
 
-  // Get user info for the inviter and the invitee.
-  $inviter = user_load($result->uid);
-  $recipient = user_load($result->recipients_uid);
+    // Get user info for the inviter and the invitee.
+    $inviter = user_load($result->uid);
+    $recipient = user_load($result->recipients_uid);
 
-  //Get inviter's email
-  $email = $inviter->mail;
-  // Get invitee's response.
-  $response = arg(2);
+    //Get inviter's email
+    $email = $inviter->mail;
+    // Get invitee's response.
+    $response = $result->response;
 
-  switch ($response) {
-    case 1:
-      $responseString = t('yes');
-      break;
-    case 0:
-       $responseString = t('no');
-      break;
-    case 2:
-      $responseString = t('maybe');
-      break;
+    switch ($response) {
+      case 1:
+        $responseString = t('yes');
+        break;
+      case 0:
+        $responseString = t('no');
+        break;
+      case 2:
+        $responseString = t('maybe');
+        break;
+    }
+
+    // Get schedule entity path for message
+    $text = $result->title;
+    $path = 'schedule/' . $result->sid;
+
+    $inviterMessage = $recipient->name;
+    $inviterMessage .= t(' has changed his/her response to ');
+    $inviterMessage .= $responseString;
+    $inviterMessage .= t(' to your invitation to video conference: ');
+    $inviterMessage .= $result->title;
+    $inviterMessage .= '<div> You may view your invitation at: </div>';
+    $inviterMessage .= l($text,$path);
+
+    $params = array();
+    $params['subject'] = $recipient->name . t(' has changed his/her response to your invitation');
+    $params['message'] = $inviterMessage;
+
+    // Check if private message is being used.
+    if(module_exists('privatemsg')) {
+      privatemsg_new_thread(array($inviter), $params['subject'], $params['message']);
+    }
+    // Send email.
+    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+
   }
+  else {
 
- // Get schedule entity path for message
-  $text = $result->title;
-  $path = 'schedule/' . $result->sid;
+    db_update('conference_confirmation')// Maybe write some sort of check if they change their response. (Like a confirmation message) I need some sort of check 5 minutes before.  Ask Michelle.
+    ->fields(array(
+      'response' => $form_state['values']['response'],
+      'comment' => $form_state['values']['comment'],
+      'time_responded' => $responsetime,
+      'responded' => $responded,
+    ))
+      ->condition('token', $token)
+      ->execute();
+    drupal_set_message('Your response has been saved.');
 
-  $inviterMessage = $recipient->name;
-  $inviterMessage .= t(' has responded ');
-  $inviterMessage .= $responseString;
-  $inviterMessage .= t(' to your invitation to video conference: ');
-  $inviterMessage .= $result->title;
-  $inviterMessage .= '<div> You may view your invitation at: </div>';
-  $inviterMessage .= l($text,$path);
+    //Query to prepare to send invitee's response email to inviter.
+    $result = db_query("SELECT conference_confirmation.token as token, conference_confirmation.senders_uid as uid, conference_confirmation.created as created, conference_confirmation.recipients_uid as recipients_uid, schedule.title as title, schedule.sid as sid
+                      FROM conference_confirmation
+                      LEFT JOIN schedule ON schedule.sid = conference_confirmation.sid
+                      WHERE token = :token", array(':token' => $token))->fetch();
 
-  $params = array();
-  $params['subject'] = $recipient->name . t(' has responded to your invitation');
-  $params['message'] = $inviterMessage;
+    // Get user info for the inviter and the invitee.
+    $inviter = user_load($result->uid);
+    $recipient = user_load($result->recipients_uid);
 
-  // Check if private message is being used.
-  if(module_exists('privatemsg')) {
-    privatemsg_new_thread(array($inviter), $params['subject'], $params['message']);
+    //Get inviter's email
+    $email = $inviter->mail;
+    // Get invitee's response.
+    $response = arg(2);
+
+    switch ($response) {
+      case 1:
+        $responseString = t('yes');
+        break;
+      case 0:
+        $responseString = t('no');
+        break;
+      case 2:
+        $responseString = t('maybe');
+        break;
+    }
+
+    // Get schedule entity path for message
+    $text = $result->title;
+    $path = 'schedule/' . $result->sid;
+
+    $inviterMessage = $recipient->name;
+    $inviterMessage .= t(' has responded ');
+    $inviterMessage .= $responseString;
+    $inviterMessage .= t(' to your invitation to video conference: ');
+    $inviterMessage .= $result->title;
+    $inviterMessage .= '<div> You may view your invitation at: </div>';
+    $inviterMessage .= l($text, $path);
+
+    $params = array();
+    $params['subject'] = $recipient->name . t(' has responded to your invitation');
+    $params['message'] = $inviterMessage;
+
+    // Check if private message is being used.
+    if (module_exists('privatemsg')) {
+      privatemsg_new_thread(array($inviter), $params['subject'], $params['message']);
+    }
+    // Send email.
+    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
   }
-  // Send email.
-  drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
-
 }
 

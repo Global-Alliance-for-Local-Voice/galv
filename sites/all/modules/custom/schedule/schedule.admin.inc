@@ -214,8 +214,10 @@ function schedule_form_submit($form, &$form_state) {
     $uids[$key] = $uid['uid'];
   }
 
-  $accounts = user_load_multiple($uids = array());
-  //$accounts = user_load_multiple($uids);
+
+
+  //$accounts = user_load_multiple($uids = array());
+  $accounts = user_load_multiple($uids);
   $name = !empty($uids) ? '<ul>' : '';
   foreach ($uids as $uid) {
     if (!is_null($uid)) {

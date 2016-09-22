@@ -10,9 +10,10 @@ function schedule_view($schedule) {
   $scheduleView = $schedule->buildContent('full');
 
   foreach ($schedule->field_users['und'] as $number => $invitee) {
-    $scheduleView['field_users'][$number]['#title'] = $scheduleView['field_users'][$number]['#title'] . ' From Query ' . $number;
+   $scheduleView['field_users'][$number]['#title'] = $scheduleView['field_users'][$number]['#title'] . ' From Query ' . $number;
+
   }
 
-  return $scheduleView;
-  //return entity_view('schedule', array(entity_id('schedule', $schedule) => $schedule), 'full');
+  //return $scheduleView;
+  return entity_view('schedule', array(entity_id('schedule', $schedule) => $schedule), 'full');
 }
