@@ -165,4 +165,73 @@ function schedule_update_7003() {
 
 }
 
+/*
+function schedule_update_7004() {
 
+  $webrtc_pm_field = array(
+
+    'field_name' => 'field_webrtc_pm',
+    'type' => 'list_boolean',
+    'label' => 'Enable private message for WebRTC invitations',
+    'description' => t('Only enable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
+                            If you have chosen to use an anonymous email address for your account, DO NOT disable private message for WebRTC invitations.'),
+    'cardinality' => 1,
+    'settings'        => array(
+      'allowed_values' => array(
+        0 => '',
+        1 => '',
+      ),
+    ),
+  );
+  field_create_field($webrtc_pm_field);
+
+  $webrtc_pm_field = array(
+    'field_name' => 'field_webrtc_pm',
+    'entity_type' => 'user',
+    'bundle' => 'user',
+    'label'       => t('Private Message for WebRTC invitations'),
+    'required' => false,
+    'display' => array(
+      'default' => array(
+        'type' => 'hidden',
+      ),
+    ),
+    'widget'      => array(
+      'type'    => 'options_onoff',
+      'settings' => array(
+        'display_label' => 1,
+      ),
+    ),
+  );
+  field_create_instance($webrtc_pm_field);
+
+  $ret = t('Create Private Message for WebRTC invitaitons field');
+  return $ret;
+}
+*/
+
+function schedule_update_7004() {
+
+  // Make sure to not run this update twice.
+  if (db_table_exists('webrtc_pm')) {
+    return;
+  }
+
+  $schema['webrtc_pm'] = array(
+    'description' => '{webrtc_pm} holds the list of users that have disabled webrtc private messaging',
+    'fields' => array(
+      'uid'    => array(
+        'description'   => 'ID of the user',
+        'type'          => 'int',
+        'not null'      => TRUE,
+        'unsigned'      => TRUE,
+      ),
+    ),
+    'primary key'       => array('uid'),
+  );
+
+  if (!(db_table_exists('webrtc_pm'))) {
+    db_create_table('webrtc_pm', $schema['webrtc_pm']);
+  }
+
+}

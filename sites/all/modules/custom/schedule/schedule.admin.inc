@@ -193,6 +193,11 @@ function schedule_form_validate($form, &$form_state) {
 function schedule_form_submit($form, &$form_state) {
   $schedule = $form_state['schedule'];
 
+  // Get date value without pesky [und] (Und will break if this site is translated.)
+  $confDateInfo = field_view_field('schedule', $schedule, 'field_schedulewebrtc');
+
+  $confDate = isset($confDateInfo['#items']) ? $confDateInfo['#items'][0]['value'] : '';
+
   entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
 
   schedule_save($schedule);
@@ -229,7 +234,9 @@ function schedule_form_submit($form, &$form_state) {
   $name .= !empty($uids) ? '</ul>' : '';
 
   // Change time into unix so that I can change the time format.
-  $timestamp = time($form_state['values']['field_schedulewebrtc']['und'][0]['value']);
+  //$timestamp = time($form_state['values']['field_schedulewebrtc']['und'][0]['value']);
+  //$timestamp = time($form_state['confdate']);
+  $timestamp = strtotime($confDate);
 
   // Create new date format.
   $nice_time = date('F j, Y, H:i', $timestamp);
@@ -258,6 +265,7 @@ function schedule_form_submit($form, &$form_state) {
     'X-Mailer' => 'Drupal'
   );
 
+  //Check if user is using privatemsg for WebRTC invites
   // This sends to the user's privatemsg account.
   if (module_exists('privatemsg')) {
     privatemsg_new_thread(array(user_load($user->uid)), $params['subject'], $params['message']);
@@ -270,6 +278,20 @@ function schedule_form_submit($form, &$form_state) {
     $token = drupal_random_key();
 
     // Query to save table with all of info and token here.
+
+    $result = db_merge('conference_confirmation')
+              ->key(array('recipients_uid' => $value->uid, 'sid' => $schedule->sid))
+              ->fields(array(
+                'token' => $token,
+                'senders_uid' => $user->uid,
+                'title' => $form_state['values']['title'],
+                'created' => $timestamp,
+                'recipients_uid' => $value->uid,
+                'sid' => $schedule->sid,
+              ))
+              ->execute();
+
+    /*
     $result = db_insert('conference_confirmation')
                 ->fields(array(
                   'token' => $token,
@@ -280,30 +302,65 @@ function schedule_form_submit($form, &$form_state) {
                   'sid' => $schedule->sid,
                 ))
                 ->execute();
+*/
+    // Check to see if each invitee has already received an invitation.  If they have and the invitaiton has changed, send an update message
+    //Note to me: get toekn, uid and sid
+    //You will also need to edit the email message that is sent to the scheduler to show that the message ahs ben edited
+
+    $inviteExists = db_query("SELECT token, recipients_uid, sid
+                      FROM conference_confirmation
+                      WHERE sid = :sid", array(':sid' => $schedule->sid))->fetch();
+
 
     //Get description if there is one.
     if($form_state['values']['description'] == '') {
       $form_state['values']['description'] = t($user->name . ' did not include a description of this conference.');
     }
+
+
     $email = $value->mail;
 
-    // Create invitee message.
-    $inviteeMessage = $user->name;
-    $inviteeMessage .= ' has invited you to a video conference ';
-    $inviteeMessage .= $form_state['values']['title'];
-    $inviteeMessage .= ' on ';
-    $inviteeMessage .= $nice_time;
-    $inviteeMessage .= ' UTC.';
-    $inviteeMessage .= '<div>Description: </div>';
-    $inviteeMessage .=  $form_state['values']['description'];
-    $inviteeMessage .= '<div>Will you attend?</div>';
-    $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
-                       l('no', 'conf_confirm/response/0/' . $token) . ' ' .
-                       l('maybe', 'conf_confirm/response/2/' . $token);
-    $params = array();
-    $params['subject'] = t('<div class="my-message">Your have been invited to a video conference</div>');
-    $params['message'] = $inviteeMessage;
+    if (isset($inviteExists->token)) {
+      // Create invitee message.
+      $inviteeMessage = $user->name;
+      $inviteeMessage .= ' has UPDATED video conference ';
+      $inviteeMessage .= $form_state['values']['title'];
+      $inviteeMessage .= '<div> Please review the following information: </div>';
+      $inviteeMessage .= ' Conference ';
+      $inviteeMessage .=  $form_state['values']['title'];
+      $inviteeMessage .= ' is scheduled for: ';
+      $inviteeMessage .= $nice_time;
+      $inviteeMessage .= ' UTC.';
+      $inviteeMessage .= '<div>Description: </div>';
+      $inviteeMessage .=  $form_state['values']['description'];
+      $inviteeMessage .= '<div>If you would like to change your response, please do so below.</div>';
+      $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
+        l('no', 'conf_confirm/response/0/' . $token) . ' ' .
+        l('maybe', 'conf_confirm/response/2/' . $token);
+      $params = array();
+      $params['subject'] = t('Video Conference ' . $form_state['values']['title'] . ' has been UPDATED');
+      $params['message'] = $inviteeMessage;
 
+    }
+    else {
+
+      // Create invitee message.
+      $inviteeMessage = $user->name;
+      $inviteeMessage .= ' has invited you to a video conference ';
+      $inviteeMessage .= $form_state['values']['title'];
+      $inviteeMessage .= ' on ';
+      $inviteeMessage .= $nice_time;
+      $inviteeMessage .= ' UTC.';
+      $inviteeMessage .= '<div>Description: </div>';
+      $inviteeMessage .= $form_state['values']['description'];
+      $inviteeMessage .= '<div>Will you attend?</div>';
+      $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
+        l('no', 'conf_confirm/response/0/' . $token) . ' ' .
+        l('maybe', 'conf_confirm/response/2/' . $token);
+      $params = array();
+      $params['subject'] = t('Your have been invited to a video conference');
+      $params['message'] = $inviteeMessage;
+    }
 
     if(module_exists('privatemsg')) {
       privatemsg_new_thread(array($value), $params['subject'], $params['message']);

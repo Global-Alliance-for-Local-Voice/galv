@@ -26,7 +26,7 @@ function _schedule_installed_fields() {
     $fields = array(
       'field_name' => 'field_users',
       'type' => 'user_reference',
-      'cardinality' => 6,
+      'cardinality' => 5,
       'entity_type' => 'schedule',
       'settings' => array(
         'referenceable_roles' => array(2),

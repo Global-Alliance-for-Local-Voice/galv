@@ -13,16 +13,16 @@ function conf_confirm_form($form, &$form_state) {
 
   // Query database to get time, invitee's user id, conference title, inviter's uid, and the conference time.
 
-  $result = db_query("SELECT conference_confirmation.token as token, conference_confirmation.senders_uid as uid, conference_confirmation.created as created, conference_confirmation.recipients_uid as recipients_uid, schedule.title as title, schedule.sid as sid
+  $myresult = db_query("SELECT conference_confirmation.token as token, conference_confirmation.senders_uid as uid, conference_confirmation.created as created, conference_confirmation.recipients_uid as recipients_uid, schedule.title as title, schedule.sid as sid
                       FROM conference_confirmation
                       LEFT JOIN schedule ON schedule.sid = conference_confirmation.sid
                       WHERE token = :token", array(':token' => $token))->fetch();
 
   // Change $time from timestamp to nicer time.
-  $nice_time = date('F j, Y, H:i', $result->created);
+  $nice_time = date('F j, Y, H:i', $myresult->created);
 
   // Get user info from $uid.
-  $myuser = user_load($result->recipients_uid);
+  $myuser = user_load($myresult->recipients_uid);
 
   // Set up preg_match().
   $contains_letter = preg_match('/[A-Za-z]/', $response);
@@ -138,7 +138,7 @@ function conf_confirm_form_submit($form, &$form_state) {
   // Get token
   $token = arg(3);
   // Check if response already exists.  If it does, then change drupal_set_message.
-  $responseExists = db_query("SELECT token, sid, time_responded
+  $responseExists = db_query("SELECT token, sid, time_responded, response
                       FROM conference_confirmation
                       WHERE token = :token", array(':token' => $token))->fetch();
 
@@ -152,7 +152,11 @@ function conf_confirm_form_submit($form, &$form_state) {
     $responded = 0;
   }
 
-  if ($responseExists->time_responded != NULL) {
+  if ($form_state['values']['response'] == $responseExists->response) {
+    drupal_set_message('You have not changed your response');
+  }
+
+  elseif ($responseExists->time_responded != NULL) {
     db_update('conference_confirmation') // Maybe write some sort of check if they change their response. (Like a confirmation message) I need some sort of check 5 minutes before.  Ask Michelle.
     ->fields(array(
       'response' => $form_state['values']['response'],
@@ -191,28 +195,29 @@ function conf_confirm_form_submit($form, &$form_state) {
         break;
     }
 
-    // Get schedule entity path for message
-    $text = $result->title;
-    $path = 'schedule/' . $result->sid;
 
-    $inviterMessage = $recipient->name;
-    $inviterMessage .= t(' has changed his/her response to ');
-    $inviterMessage .= $responseString;
-    $inviterMessage .= t(' to your invitation to video conference: ');
-    $inviterMessage .= $result->title;
-    $inviterMessage .= '<div> You may view your invitation at: </div>';
-    $inviterMessage .= l($text,$path);
+      // Get schedule entity path for message
+      $text = $result->title;
+      $path = 'schedule/' . $result->sid;
 
-    $params = array();
-    $params['subject'] = $recipient->name . t(' has changed his/her response to your invitation');
-    $params['message'] = $inviterMessage;
+      $inviterMessage = $recipient->name;
+      $inviterMessage .= t(' has changed his/her response to ');
+      $inviterMessage .= $responseString;
+      $inviterMessage .= t(' to your invitation to video conference: ');
+      $inviterMessage .= $result->title;
+      $inviterMessage .= '<div> You may view your invitation at: </div>';
+      $inviterMessage .= l($text, $path);
 
-    // Check if private message is being used.
-    if(module_exists('privatemsg')) {
-      privatemsg_new_thread(array($inviter), $params['subject'], $params['message']);
-    }
-    // Send email.
-    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+      $params = array();
+      $params['subject'] = $recipient->name . t(' has changed his/her response to your invitation');
+      $params['message'] = $inviterMessage;
+
+      // Check if private message is being used.
+      if (module_exists('privatemsg')) {
+        privatemsg_new_thread(array($inviter), $params['subject'], $params['message']);
+      }
+      // Send email.
+      drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
 
   }
   else {
