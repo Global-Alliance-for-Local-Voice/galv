@@ -451,18 +451,30 @@ function schedule_theme($existing, $type, $theme, $path) {
  * Implements hook_form_alter().
  */
 function schedule_form_alter(&$form, &$form_state, $form_id) {
+
   if ($form_id == 'user_profile_form') {
 
     $myUser = $form_state['user']->uid;
-    $a = 1;
 
     // Check if user is using a fake email address.
+    $fakeEmailModule = module_exists('galv_fake_email');
     $fakeEmail = preg_match('/anon@galv.world/', $form_state['user']->mail);
     $webrtcpmDisabled = db_query("SELECT uid
                                   FROM webrtc_pm
                                   WHERE uid = :uid", array(':uid' => $myUser))->fetch();
 
-    if ($webrtcpmDisabled->uid  == '' || $fakeEmail == TRUE ) {
+    if ($fakeEmail == TRUE && $fakeEmailModule == TRUE) {
+      $form['privatemsg']['webRTC'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable private messages for WebRTC invitations.'),
+        '#description' => t('Only disable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
+                            If you have chosen to use an anonymous email address for your account, you MAY NOT disable private message for WebRTC invitations.'),
+        '#default_value' => TRUE,
+        '#disabled' => TRUE,
+      );
+    }
+
+    elseif ($webrtcpmDisabled->uid  == '') {
 
       $form['privatemsg']['webRTC'] = array(
         '#type' => 'checkbox',
@@ -470,6 +482,7 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
         '#description' => t('Only disable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
                             If you have chosen to use an anonymous email address for your account, you MAY NOT disable private message for WebRTC invitations.'),
         '#default_value' => TRUE,
+        //'#disabled' => TRUE,
       );
     }
     else {
@@ -479,10 +492,10 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
         '#description' => t('Only disable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
                             If you have chosen to use an anonymous email address for your account, you MAY NOT disable private message for WebRTC invitations.'),
         '#default_value' => FALSE,
+        //'#disabled' => FALSE,
       );
     }
   }
-
 
 
 }
@@ -494,28 +507,32 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
  */
 
 function schedule_user_update(&$edit, $account, $category) {
-   $a = 1;
-  $fakeEmail = preg_match('/anon@galv.world/', $account->mail);
 
+  // Check is $account->webRTC exists.
+  $webrtcExist = property_exists($account, 'webRTC');
+
+  if ($webrtcExist == FALSE) {
+    // Do nothing.
+  }
+  elseif ($webrtcExist == TRUE) {
 
     $current = $account->webRTC;
 
-
     // only perform the save if the value has changed
-    if ($current == 0 ) {
-        db_insert('webrtc_pm')
-          ->fields(array('uid' => $account->uid))
-          ->execute();
-      }
-      else {
-        //drupal_set_message(t('If you have created an anonymouse email address for your account, you CANNOT set Enable private mesages for WebRTC invitations to NO.'));
+    if ($current == FALSE) {
+      db_insert('webrtc_pm')
+        ->fields(array('uid' => $account->uid))
+        ->execute();
+    }
+    else {
 
-        db_delete('webrtc_pm')
-          ->condition('uid', $account->uid)
-          ->execute();
-      }
-
+      db_delete('webrtc_pm')
+        ->condition('uid', $account->uid)
+        ->execute();
+    }
+  }
 }
+
 
 /**
  * Implements hook_form_alter().

@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * Implements hook_form_alter().
+ */
+function galv_fake_email_form_alter(&$form, &$form_state, $form_id) {
+  drupal_set_message($form_id);
+
+  if ($form_id == 'user_register_form') {
+
+    // Add js to form
+    $form['#attached']['js'] = array(
+      drupal_get_path('module', 'galv_fake_email') . '/galv_fake_email.js',
+    );
+
+
+    // Checkbox for fake email
+    $form['account']['fake_email'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Click to generate an anonymous email address'),
+      '#description' => t('If you choose to create an anonymous email address, 
+                           you will NOT be able to receive email from the GALV site.'),
+      '#disabled' => TRUE,
+      '#weight' => -9,
+    );
+  }
+
+}
+
