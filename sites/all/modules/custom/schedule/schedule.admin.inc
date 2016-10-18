@@ -191,16 +191,22 @@ function schedule_form_validate($form, &$form_state) {
  * Schedule submit handler.
  */
 function schedule_form_submit($form, &$form_state) {
+  //$schedule = $form_state['values'];
   $schedule = $form_state['schedule'];
 
-  // Get date value without pesky [und] (Und will break if this site is translated.)
-  $confDateInfo = field_view_field('schedule', $schedule, 'field_schedulewebrtc');
+  $conftime = $form_state['values']['field_schedulewebrtc']['und'][0]['value'];
 
-  $confDate = isset($confDateInfo['#items']) ? $confDateInfo['#items'][0]['value'] : '';
+  // Get date value without pesky [und] (Und will break if this site is translated.)
+  //$confDateInfo = field_view_field('schedule', $form_state['schedule'], 'field_schedulewebrtc');
+
+  //$confDateInfo = field_view_value('schedule', $schedule, 'field_schedulewebrtc');
+
+  //$confDate = isset($confDateInfo['#items']) ? $confDateInfo['#items'][0]['value'] : '';
 
   entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
 
   schedule_save($schedule);
+  $schedule_uri = entity_uri('schedule', $schedule);
 
   // Send email.
   global $user;
@@ -236,7 +242,7 @@ function schedule_form_submit($form, &$form_state) {
   // Change time into unix so that I can change the time format.
   //$timestamp = time($form_state['values']['field_schedulewebrtc']['und'][0]['value']);
   //$timestamp = time($form_state['confdate']);
-  $timestamp = strtotime($confDate);
+  $timestamp = strtotime($conftime);
 
   // Create new date format.
   $nice_time = date('F j, Y, H:i', $timestamp);
@@ -368,7 +374,7 @@ function schedule_form_submit($form, &$form_state) {
      drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
    }
 
-  $schedule_uri = entity_uri('schedule', $schedule);
+  //$schedule_uri = entity_uri('schedule', $schedule);
 
   $form_state['redirect'] = $schedule_uri['path'];
 

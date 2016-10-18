@@ -3,4 +3,5 @@ description = Creates a fake email field in the user registration form
 package = GALV
 core = 7.x
 
-
+dependencies[] = privatemsg
+dependencies[] = stringoverrides

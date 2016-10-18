@@ -13,6 +13,10 @@ function galv_fake_email_form_alter(&$form, &$form_state, $form_id) {
       drupal_get_path('module', 'galv_fake_email') . '/galv_fake_email.js',
     );
 
+    // Add css to form
+    $form['#attached']['css'] = array(
+      drupal_get_path('module', 'galv_fake_email') . '/css/galv_fake_email.css',
+    );
 
     // Checkbox for fake email
     $form['account']['fake_email'] = array(

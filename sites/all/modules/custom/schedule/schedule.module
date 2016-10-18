@@ -456,14 +456,29 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
 
     $myUser = $form_state['user']->uid;
 
+
     // Check if user is using a fake email address.
     $fakeEmailModule = module_exists('galv_fake_email');
     $fakeEmail = preg_match('/anon@galv.world/', $form_state['user']->mail);
+
+    // Query to see if user has disabled private message for webrtc
     $webrtcpmDisabled = db_query("SELECT uid
                                   FROM webrtc_pm
                                   WHERE uid = :uid", array(':uid' => $myUser))->fetch();
 
     if ($fakeEmail == TRUE && $fakeEmailModule == TRUE) {
+      $form['privatemsg']['webRTC'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Enable private messages for WebRTC invitations.'),
+        '#description' => t('Only disable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
+                            If you have chosen to use an anonymous email address for your account, you MAY NOT disable private message for WebRTC invitations.'),
+        '#default_value' => TRUE,
+        '#disabled' => TRUE,
+      );
+    }
+
+    // Check to see if the user has a fake email, even of the galv_fake_email module is urned off.
+    if ($fakeEmail == TRUE) {
       $form['privatemsg']['webRTC'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable private messages for WebRTC invitations.'),

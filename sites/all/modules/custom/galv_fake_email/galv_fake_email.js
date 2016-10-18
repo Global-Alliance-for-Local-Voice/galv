@@ -15,15 +15,13 @@
     // To understand behaviors, see https://drupal.org/node/756722#behaviors
     Drupal.behaviors.galv_fake_email = {
         attach: function (context, settings) {
-            console.log('got here');
+
             var value = $('#edit-name').val();
 
-            console.log('got here also');
-            console.log (value);
             $('#edit-name').change(function () {
               if (this.value != '') {
                   // Enable fake email checkbox.
-                  $('#edit-fake-email').prop('disabled', false);
+                  $('#edit-fake-email').attr('disabled', false);
 
                   // Check if the checkbox is checked.
                   // So that in case the username changes and is now different, the fake meail is still correct.
@@ -34,12 +32,11 @@
               }
               else {
                   // Disable fake email checkbox if user deletes their Username.
-                  $('#edit-fake-email').prop('checked', false);
-                  $('#edit-fake-email').prop('disabled', true);
+                  $('#edit-fake-email').attr('checked', false);
+                  $('#edit-fake-email').attr('disabled', true);
                   // Make the email value blank.
                   $('#edit-mail').val('')
-                      .prop("readonly", false)
-                      .prop('disabled', false);
+                      .attr("readonly", false);
               }
             });
 
@@ -51,10 +48,9 @@
                     $('#edit-mail').val($('#edit-name').val() + 'anon@galv.world');
                     // disable $('#edit-mail')
                     $('#edit-mail')
-                        .prop("readonly", "readonly")
-                        .prop('disabled', true);
-                       // .toggleClass("grey", this.checked);
-
+                        .attr("readonly", "readonly");
+                    // This should be done in the theme, so I'm disabling it for now.
+                    $('#edit-mail').css({'color': '#999'});
 
                 }
                 else if ($('#edit-fake-email:checkbox:checked').length == 0) {
@@ -62,9 +58,9 @@
                     $('#edit-mail').val('');
                     // enable $('#edit-mail')
                     $('#edit-mail')
-                        .prop("readonly", false)
-                        .prop('disabled', false);
-
+                        .attr("readonly", false);
+                    // This should be done in the theme, so I'm disabling it for now.
+                    $('#edit-mail').css({'color': '#000000'});
                 }
 
             });
