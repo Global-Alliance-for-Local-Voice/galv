@@ -20,23 +20,16 @@
 
             $('#edit-name').change(function () {
               if (this.value != '') {
-                  // Enable fake email checkbox.
-                  $('#edit-fake-email').attr('disabled', false);
-
                   // Check if the checkbox is checked.
-                  // So that in case the username changes and is now different, the fake meail is still correct.
+                  // So that in case the username changes and is now different, the fake email is still correct.
                   if ($('#edit-fake-email:checkbox:checked').length > 0) {
                       // Match checkbox to name if it changes.
                       $('#edit-mail').val($('#edit-name').val() + 'anon@galv.world');
                   }
               }
               else {
-                  // Disable fake email checkbox if user deletes their Username.
-                  $('#edit-fake-email').attr('checked', false);
-                  $('#edit-fake-email').attr('disabled', true);
-                  // Make the email value blank.
-                  $('#edit-mail').val('')
-                      .attr("readonly", false);
+                  // Make the email value 'anon@galv.world'.
+                  $('#edit-mail').val('anon@galv.world');
               }
             });
 
@@ -48,19 +41,20 @@
                     $('#edit-mail').val($('#edit-name').val() + 'anon@galv.world');
                     // disable $('#edit-mail')
                     $('#edit-mail')
-                        .attr("readonly", "readonly");
-                    // This should be done in the theme, so I'm disabling it for now.
-                    $('#edit-mail').css({'color': '#999'});
-
+                        .each(function() {
+                            alert("After clicking this button, you will no longer be able to enter your E-mail address.  An anonymous email address will be " +
+                                "generated when you enter your Username.");
+                        })
+                        .attr("readonly", "readonly")
+                        .addClass("message").removeClass("test");
                 }
                 else if ($('#edit-fake-email:checkbox:checked').length == 0) {
-                    // Set email to blank if checkbox is unchecked
+                    // Set email to blank if checkbox is unchecked.
                     $('#edit-mail').val('');
                     // enable $('#edit-mail')
                     $('#edit-mail')
-                        .attr("readonly", false);
-                    // This should be done in the theme, so I'm disabling it for now.
-                    $('#edit-mail').css({'color': '#000000'});
+                        .attr("readonly", false)
+                        .removeClass("message").addClass("test");
                 }
 
             });

@@ -4,7 +4,7 @@
  * Implements hook_form_alter().
  */
 function galv_fake_email_form_alter(&$form, &$form_state, $form_id) {
-  drupal_set_message($form_id);
+  //drupal_set_message($form_id);
 
   if ($form_id == 'user_register_form') {
 
@@ -24,10 +24,17 @@ function galv_fake_email_form_alter(&$form, &$form_state, $form_id) {
       '#title' => t('Click to generate an anonymous email address'),
       '#description' => t('If you choose to create an anonymous email address, 
                            you will NOT be able to receive email from the GALV site.'),
-      '#disabled' => TRUE,
+      '#disabled' => FALSE,
       '#weight' => -9,
     );
+
+    // Add classes to email address form field
+
+    $form['account']['mail']['#attributes']['class'][] = 'message test';
+
   }
 
 }
+
+
 
