@@ -192,9 +192,29 @@ function schedule_form_validate($form, &$form_state) {
  */
 function schedule_form_submit($form, &$form_state) {
   //$schedule = $form_state['values'];
+
   $schedule = $form_state['schedule'];
 
+  // I have this a few lines down too. I'm just doing this to get the sid.
+  /*
+  entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
+
+  schedule_save($schedule);
+*/
   $conftime = $form_state['values']['field_schedulewebrtc']['und'][0]['value'];
+
+  //Count number of users already invited so I can see if the inviter is adding updating invite.
+  /*
+  $numberOfInvitees = db_query("SELECT sid, recipients_uid
+                      FROM conference_confirmation
+                      WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
+
+
+  // Get count of invitees
+  $countInvitees = count($numberOfInvitees);
+
+*/
+
 
   // Get date value without pesky [und] (Und will break if this site is translated.)
   //$confDateInfo = field_view_field('schedule', $form_state['schedule'], 'field_schedulewebrtc');
@@ -203,10 +223,18 @@ function schedule_form_submit($form, &$form_state) {
 
   //$confDate = isset($confDateInfo['#items']) ? $confDateInfo['#items'][0]['value'] : '';
 
-  entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
+ entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
 
   schedule_save($schedule);
   $schedule_uri = entity_uri('schedule', $schedule);
+
+  // Get new number of invitees to se if anyone was added during editing
+  /*
+  $newNumberOfInvitees = db_query("SELECT sid, recipients_uid
+                      FROM conference_confirmation
+                      WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
+
+  $secondCountInvitees = count($newNumberOfInvitees);*/
 
   // Send email.
   global $user;
@@ -247,37 +275,90 @@ function schedule_form_submit($form, &$form_state) {
   // Create new date format.
   $nice_time = date('F j, Y, H:i', $timestamp);
 
-  // Create the message for the person creating the conference (the inviter).
-  $inviterMessage = t('You have scheduled video conference: ');
-  $inviterMessage .= $form_state['values']['title'];
-  $inviterMessage .= '<div>' . t('Description:') .  '</div>';
-  $inviterMessage .= $form_state['values']['description'];
-  $inviterMessage .= '<div>' . t('Participants:') . '</div>';
-  $inviterMessage .= $name;
-  $inviterMessage .= '<div>Date and time: </div>';
-  $inviterMessage .= $nice_time;
-  $inviterMessage .= ' UTC.';
-  $inviterMessage .= '<div>' . t('To edit your video conference, please visit') .  '</div>';
-  $inviterMessage .= l($text, $path);
+  // Check if message is new or is being updated and send email to inviter accordingly.
+  if ($schedule->created == $schedule->changed) {
+
+    // Create the message for the person creating the conference (the inviter).
+    $inviterMessage = t('You have scheduled a video conference: ');
+    $inviterMessage .= $form_state['values']['title'];
+    $inviterMessage .= '<div>' . t('Description:') . '</div>';
+    $inviterMessage .= $form_state['values']['description'];
+    $inviterMessage .= '<div>' . t('Participants:') . '</div>';
+    $inviterMessage .= $name;
+    $inviterMessage .= '<div>Date and time: </div>';
+    $inviterMessage .= $nice_time;
+    $inviterMessage .= ' UTC.';
+    $inviterMessage .= '<div>' . t('To edit your video conference, please visit') . '</div>';
+    $inviterMessage .= l($text, $path);
 
 
-  $params = array();
-  $params['subject'] = t('Your video conference entitle: ' . $form_state['values']['title']);
-  $params['message'] = $inviterMessage;
-  $params['headers'] = array(
-    'MIME-Version' => '1.0',
-    'Content-Type' => 'text/html; charset=UTF-8; format=flowed',
-    'Content-Transfer-Encoding' => '8Bit',
-    'X-Mailer' => 'Drupal'
-  );
+    $params = array();
+    $params['subject'] = t('Your video conference entitle: ' . $form_state['values']['title']);
+    $params['message'] = $inviterMessage;
+    $params['headers'] = array(
+      'MIME-Version' => '1.0',
+      'Content-Type' => 'text/html; charset=UTF-8; format=flowed',
+      'Content-Transfer-Encoding' => '8Bit',
+      'X-Mailer' => 'Drupal'
+    );
+  }
+  else {
+    // Create the message for the person EDITING the conference (the inviter).
+    $inviterMessage = t('You have EDITED video conference: ');
+    $inviterMessage .= $form_state['values']['title'];
+    $inviterMessage .= '<div>' . t('Description:') . '</div>';
+    $inviterMessage .= $form_state['values']['description'];
+    $inviterMessage .= '<div>' . t('Participants:') . '</div>';
+    $inviterMessage .= $name;
+    $inviterMessage .= '<div>Date and time: </div>';
+    $inviterMessage .= $nice_time;
+    $inviterMessage .= ' UTC.';
+    $inviterMessage .= '<div>' . t('To edit your video conference further, please visit') . '</div>';
+    $inviterMessage .= l($text, $path);
 
-  //Check if user is using privatemsg for WebRTC invites
-  // This sends to the user's privatemsg account.
+
+    $params = array();
+    $params['subject'] = t('You have EDITED your video conference entitle: ' . $form_state['values']['title']);
+    $params['message'] = $inviterMessage;
+    $params['headers'] = array(
+      'MIME-Version' => '1.0',
+      'Content-Type' => 'text/html; charset=UTF-8; format=flowed',
+      'Content-Transfer-Encoding' => '8Bit',
+      'X-Mailer' => 'Drupal'
+    );
+  }
+  // Check if the inviter turned privatemsg for WebRTC off in User Profile form
+  $webRTCpmOFF = db_query("SELECT uid
+                             FROM webrtc_pm
+                             WHERE uid = :uid", array(':uid' => $user->uid))->fetch();
+
+
+  // Check to see is inviter is using a fake email
+  $fakeEmail = preg_match('/anon@galv.world/', $email);
+
+  // This sends to the user's privatemsg account. Only allow private messages to be sent if user has not disbaled it in their profile page.
+  if ($webRTCpmOFF !== false) {
+    // Don't send a private message.
+  }
+  else if (module_exists('privatemsg')) {
+    privatemsg_new_thread(array(user_load($user->uid)), $params['subject'], $params['message']);
+  }
+  //Check if inviter is using privatemsg for WebRTC invites
+  if (module_exists('galv_fake_email') && $fakeEmail == TRUE) {
+    // Don't let them send an email.
+  }
+  else {
+    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+  }
+
+
+  // THIS IS WHAT I HAD BEFORE.
+  /*
   if (module_exists('privatemsg')) {
     privatemsg_new_thread(array(user_load($user->uid)), $params['subject'], $params['message']);
   }
   drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
-
+*/
    // Loop through $accounts.
   foreach ($accounts as $value) {
     // Get token
@@ -286,29 +367,18 @@ function schedule_form_submit($form, &$form_state) {
     // Query to save table with all of info and token here.
 
     $result = db_merge('conference_confirmation')
-              ->key(array('recipients_uid' => $value->uid, 'sid' => $schedule->sid))
-              ->fields(array(
-                'token' => $token,
-                'senders_uid' => $user->uid,
-                'title' => $form_state['values']['title'],
-                'created' => $timestamp,
-                'recipients_uid' => $value->uid,
-                'sid' => $schedule->sid,
-              ))
-              ->execute();
+      ->key(array('recipients_uid' => $value->uid, 'sid' => $schedule->sid))
+      ->fields(array(
+        'token' => $token,
+        'senders_uid' => $user->uid,
+        'title' => $form_state['values']['title'],
+        'created' => $timestamp,
+        'recipients_uid' => $value->uid,
+        'sid' => $schedule->sid,
+      ))
+      ->execute();
 
-    /*
-    $result = db_insert('conference_confirmation')
-                ->fields(array(
-                  'token' => $token,
-                  'senders_uid' => $user->uid,
-                  'title' => $form_state['values']['title'],
-                  'created' => $timestamp,
-                  'recipients_uid' => $value->uid,
-                  'sid' => $schedule->sid,
-                ))
-                ->execute();
-*/
+
     // Check to see if each invitee has already received an invitation.  If they have and the invitaiton has changed, send an update message
     //Note to me: get toekn, uid and sid
     //You will also need to edit the email message that is sent to the scheduler to show that the message ahs ben edited
@@ -318,68 +388,87 @@ function schedule_form_submit($form, &$form_state) {
                       WHERE sid = :sid", array(':sid' => $schedule->sid))->fetch();
 
 
-    //Get description if there is one.
-    if($form_state['values']['description'] == '') {
-      $form_state['values']['description'] = t($user->name . ' did not include a description of this conference.');
+    // Check if schedule is new or is being updated
+   /*
+    if ($schedule->created == $schedule->changed) {
+      // Don't send an email becasue the schedule is not being updated, it's being created.
+    }
+  */
+
+      // Check if inviter has added new invitees.
+      $newNumbOfInvitees = db_query("SELECT sid, recipients_uid
+                      FROM conference_confirmation
+                      WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
+      // Count $numberOfInvitees
+      $newCountInvitees = count($newNumbOfInvitees);
+
+
+      //Get description if there is one.
+      if ($form_state['values']['description'] == '') {
+        $form_state['values']['description'] = t($user->name . ' did not include a description of this conference.');
+      }
+
+      $email = $value->mail;
+
+
+      if (isset($inviteExists->token) && ($schedule->created != $schedule->changed) ) {
+        // Create invitee message.
+        $inviteeMessage = $user->name;
+        $inviteeMessage .= ' has UPDATED video conference ';
+        $inviteeMessage .= $form_state['values']['title'];
+        $inviteeMessage .= '<div> Please review the following information: </div>';
+        $inviteeMessage .= ' Conference ';
+        $inviteeMessage .= $form_state['values']['title'];
+        $inviteeMessage .= ' is scheduled for: ';
+        $inviteeMessage .= $nice_time;
+        $inviteeMessage .= ' UTC.';
+        $inviteeMessage .= '<div>Description: </div>';
+        $inviteeMessage .= $form_state['values']['description'];
+        $inviteeMessage .= '<div>If you would like to change your response, please do so below.</div>';
+        $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
+          l('no', 'conf_confirm/response/0/' . $token) . ' ' .
+          l('maybe', 'conf_confirm/response/2/' . $token);
+        $params = array();
+        $params['subject'] = t('Video Conference ' . $form_state['values']['title'] . ' has been UPDATED');
+        $params['message'] = $inviteeMessage;
+
+      }
+      else {
+
+        // Create invitee message.
+        $inviteeMessage = $user->name;
+        $inviteeMessage .= ' has invited you to a video conference ';
+        $inviteeMessage .= $form_state['values']['title'];
+        $inviteeMessage .= ' on ';
+        $inviteeMessage .= $nice_time;
+        $inviteeMessage .= ' UTC.';
+        $inviteeMessage .= '<div>Description: </div>';
+        $inviteeMessage .= $form_state['values']['description'];
+        $inviteeMessage .= '<div>Will you attend?</div>';
+        $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
+          l('no', 'conf_confirm/response/0/' . $token) . ' ' .
+          l('maybe', 'conf_confirm/response/2/' . $token);
+        $params = array();
+        $params['subject'] = t('Your have been invited to a video conference');
+        $params['message'] = $inviteeMessage;
+      }
+
+      if (module_exists('privatemsg')) {
+        privatemsg_new_thread(array($value), $params['subject'], $params['message']);
+      }
+      drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
     }
 
+    //$schedule_uri = entity_uri('schedule', $schedule);
 
-    $email = $value->mail;
+    $form_state['redirect'] = $schedule_uri['path'];
 
-    if (isset($inviteExists->token)) {
-      // Create invitee message.
-      $inviteeMessage = $user->name;
-      $inviteeMessage .= ' has UPDATED video conference ';
-      $inviteeMessage .= $form_state['values']['title'];
-      $inviteeMessage .= '<div> Please review the following information: </div>';
-      $inviteeMessage .= ' Conference ';
-      $inviteeMessage .=  $form_state['values']['title'];
-      $inviteeMessage .= ' is scheduled for: ';
-      $inviteeMessage .= $nice_time;
-      $inviteeMessage .= ' UTC.';
-      $inviteeMessage .= '<div>Description: </div>';
-      $inviteeMessage .=  $form_state['values']['description'];
-      $inviteeMessage .= '<div>If you would like to change your response, please do so below.</div>';
-      $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
-        l('no', 'conf_confirm/response/0/' . $token) . ' ' .
-        l('maybe', 'conf_confirm/response/2/' . $token);
-      $params = array();
-      $params['subject'] = t('Video Conference ' . $form_state['values']['title'] . ' has been UPDATED');
-      $params['message'] = $inviteeMessage;
+    drupal_set_message(t('Schedule %title saved.', array('%title' => entity_label('schedule', $schedule))));
 
-    }
-    else {
-
-      // Create invitee message.
-      $inviteeMessage = $user->name;
-      $inviteeMessage .= ' has invited you to a video conference ';
-      $inviteeMessage .= $form_state['values']['title'];
-      $inviteeMessage .= ' on ';
-      $inviteeMessage .= $nice_time;
-      $inviteeMessage .= ' UTC.';
-      $inviteeMessage .= '<div>Description: </div>';
-      $inviteeMessage .= $form_state['values']['description'];
-      $inviteeMessage .= '<div>Will you attend?</div>';
-      $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
-        l('no', 'conf_confirm/response/0/' . $token) . ' ' .
-        l('maybe', 'conf_confirm/response/2/' . $token);
-      $params = array();
-      $params['subject'] = t('Your have been invited to a video conference');
-      $params['message'] = $inviteeMessage;
-    }
-
-    if(module_exists('privatemsg')) {
-      privatemsg_new_thread(array($value), $params['subject'], $params['message']);
-    }
-     drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
-   }
-
-  //$schedule_uri = entity_uri('schedule', $schedule);
-
-  $form_state['redirect'] = $schedule_uri['path'];
-
-  drupal_set_message(t('Schedule %title saved.', array('%title' => entity_label('schedule', $schedule))));
 }
+
+
+
 
 function schedule_form_submit_delete($form, &$form_state) {
   $schedule = $form_state['schedule'];

@@ -393,6 +393,10 @@ function schedule_preprocess(&$variables, $hook) {
  */
 function schedule_preprocess_schedule(&$variable) {
 
+  // Define these variables to prevent Notices from occurring.
+  $variable['invitees'] = array();
+  $variable['field_users'] = array();
+
   $variable['invitees'] = $variable['field_users'];// Make invitees an array that I create that array should be a key value mixture of the use rname adn the response.
 
   $invited = array();
@@ -548,43 +552,16 @@ function schedule_user_update(&$edit, $account, $category) {
   }
 }
 
-
 /**
- * Implements hook_form_alter().
+ * Implements hook_entity_presave
+ * @param $schedule
  */
+function schedule_entity_presave($schedule) {
 
+  // Get current time
+  $now = time();
 
-/*
-function schedule_form_alter(&$form, &$form_state, $form_id) {
-
-  drupal_set_message($form_id);
-
-  // We will need to set anonymous emails to include the string 'anon@galv.world' for this to work.
-  if ($form_id == 'user_profile_form') {
-
-
-    if (preg_match('/anon@galv.world/', $form_state['user']->mail) == TRUE) {
-
-      $form['privatemsg']['webRTC'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Enable private message for WebRTC invitations.'),
-        '#description' => t('Only enable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
-                            If you have chosen to use an anonymous email address for your account, DO NOT disable private message for WebRTC invitations.'),
-        '#default_value' => TRUE,
-      );
-    }
-    else {
-      $form['privatemsg']['webRTC'] = array(
-        '#type' => 'checkbox',
-        '#title' => t('Enable private message for WebRTC invitations.'),
-        '#description' => t('Only enable private message for WebRTC invitations if you would like to receive your WebRTC invitations by email ONLY.
-                            If you have chosen to use an anonymous email address for your account, DO NOT disable private message for WebRTC invitations.'),
-        '#default_value' => FALSE,
-      );
-    }
-
-
-  }
+  // Change the changed column in schedule table to now
+  $schedule->changed = $now;
 
 }
-*/

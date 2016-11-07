@@ -43,6 +43,9 @@ function conf_confirm_form($form, &$form_state) {
   if (isset($confInfo->response)) {
     $inviteeResponded = $confInfo->response;
   }
+  else {
+    $inviteeResponded = NULL;
+  }
 
   // Doing all this in case someone goes here directly, without going through an email.
   if($response == '' || strlen($response) != 1 || $allowed == FALSE || $token == '' || isset($confInfo->token) != $token || $confInfo == FALSE) {

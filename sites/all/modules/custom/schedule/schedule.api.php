@@ -55,7 +55,9 @@ function hook_schedule_insert(Schedule $schedule) {
  *   The $schedule that is being inserted or updated.
  *
  * @see hook_entity_presave()
+ * function hook_schedule_presave(Schedule $schedule) { //@todo further testing on whether it should be hook_schedule_presave or function (Schedule $schedule)  {
  */
+//function (Schedule $schedule) {
 function hook_schedule_presave(Schedule $schedule) {
   $schedule->name = 'foo';
 }
