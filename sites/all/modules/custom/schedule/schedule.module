@@ -393,50 +393,58 @@ function schedule_preprocess(&$variables, $hook) {
  */
 function schedule_preprocess_schedule(&$variable) {
 
-  // Define these variables to prevent Notices from occurring.
-  $variable['invitees'] = array();
-  $variable['field_users'] = array();
+  // Check the second argument of the submit page.  It should be the sid of the schedule (a number).
+  $schedule_sid = arg(1);
 
-  $variable['invitees'] = $variable['field_users'];// Make invitees an array that I create that array should be a key value mixture of the use rname adn the response.
+  // Make sure $schedule_sid is numeric and that variable['field_users'] exists.
+  // If the above is false, don't add invitees to the variable array.
+  if (is_numeric($schedule_sid) && isset($variable['field_users'])) {
+    $variable['invitees'] = $variable['field_users'];
+  }
 
-  $invited = array();
+  // Check to make sure the invitees variable is set to avoid a notice.
+  if (isset($variable['invitees'])) {
+    $invited = array();
 
-  if (is_array($variable['invitees']) || $variable['invitees'] instanceof Traversable) {
-    foreach ($variable['invitees'] as $invitee) {
+    if (is_array($variable['invitees']) || $variable['invitees'] instanceof Traversable) {
+      foreach ($variable['invitees'] as $invitee) {
 
 
-      $result = db_query("SELECT title,recipients_uid, name, response, sid
+        $result = db_query("SELECT title,recipients_uid, name, response, sid
                         FROM conference_confirmation
                         LEFT JOIN users ON uid = recipients_uid
                         WHERE recipients_uid = :recipients_uid AND sid = :sid", array(
-        ':recipients_uid' => $invitee['uid'],
-        ':sid' => $variable['schedule']->sid
-      ))->fetch();
+          ':recipients_uid' => $invitee['uid'],
+          ':sid' => $variable['schedule']->sid
+        ))->fetch();
 
-      //Display responses with words not numbers.
-      if (is_null($result->response)) {
-        $result->response = 'has not responded.';
+        //Display responses with words not numbers.
+        if (is_null($result->response)) {
+          $result->response = 'has not responded.';
+        }
+
+        switch ($result->response) {
+          case "0":
+            $result->response = 'has responded no.';
+            break;
+          case "1":
+            $result->response = 'has responded yes.';
+            break;
+          case "2":
+            $result->response = 'has responded maybe';
+            break;
+        }
+
+        // Set the invitees uid as equal to all the info I want to loop through in schedule_template.tpl.php.
+        // This is so the uid doesn not appear in the schedule page's listof who has been invited and how they have responded.
+        $invited[$result->recipients_uid] = l($result->name, '/users/' . $result->name) . ' ' .  $result->response;
+        //$invited[$result->response . '_' . $result->recipients_uid] = l($result->name, '/users/' . $result->name);
       }
-
-      switch ($result->response) {
-        case "0":
-          $result->response = 'has responded no.';
-          break;
-        case "1":
-          $result->response = 'has responded yes.';
-          break;
-        case "2":
-          $result->response = 'has responded maybe';
-          break;
-      }
-
-      $invited[$result->response . '_' . $result->recipients_uid] = l($result->name, '/users/' . $result->name);
     }
+    $variable['mypeople'] = $invited;
+
   }
-  $variable['mypeople'] = $invited;
-
 }
-
 /**
  * Implements hook_theme().
  */
@@ -470,7 +478,7 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
                                   FROM webrtc_pm
                                   WHERE uid = :uid", array(':uid' => $myUser))->fetch();
 
-    if ($fakeEmail == TRUE && $fakeEmailModule == TRUE) {
+    if ($fakeEmail && $fakeEmailModule) {
       $form['privatemsg']['webRTC'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable private messages for WebRTC invitations.'),
@@ -482,7 +490,7 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
     }
 
     // Check to see if the user has a fake email, even of the galv_fake_email module is urned off.
-    if ($fakeEmail == TRUE) {
+    if ($fakeEmail) {
       $form['privatemsg']['webRTC'] = array(
         '#type' => 'checkbox',
         '#title' => t('Enable private messages for WebRTC invitations.'),
@@ -539,7 +547,8 @@ function schedule_user_update(&$edit, $account, $category) {
 
     // only perform the save if the value has changed
     if ($current == FALSE) {
-      db_insert('webrtc_pm')
+      db_merge('webrtc_pm')
+        ->key(array('uid' => $account->uid))
         ->fields(array('uid' => $account->uid))
         ->execute();
     }

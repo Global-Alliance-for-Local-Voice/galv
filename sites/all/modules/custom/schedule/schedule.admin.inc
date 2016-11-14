@@ -193,6 +193,9 @@ function schedule_form_validate($form, &$form_state) {
 function schedule_form_submit($form, &$form_state) {
   //$schedule = $form_state['values'];
 
+  // Function to only allow private messages to be sent for scheduling if user has not disabled it in their profile page
+
+
   $schedule = $form_state['schedule'];
 
   // I have this a few lines down too. I'm just doing this to get the sid.
@@ -256,6 +259,18 @@ function schedule_form_submit($form, &$form_state) {
     }
   }
 
+
+  // Query to see if which invitees are already in the db.
+  $checkMoreInvitees = db_query("SELECT recipients_uid 
+                                 FROM {conference_confirmation}
+                                 WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
+
+    foreach ($checkMoreInvitees as $getUid) {
+      $inviteesUid[$getUid->recipients_uid] = $getUid->recipients_uid;
+    }
+
+    if (isset($gotInviteesUid) ? $inviteesUid : '');
+   // $gotInviteesUid = $inviteesUid;
 
   //$accounts = user_load_multiple($uids = array());
   $accounts = user_load_multiple($uids);
@@ -327,30 +342,8 @@ function schedule_form_submit($form, &$form_state) {
       'X-Mailer' => 'Drupal'
     );
   }
-  // Check if the inviter turned privatemsg for WebRTC off in User Profile form
-  $webRTCpmOFF = db_query("SELECT uid
-                             FROM webrtc_pm
-                             WHERE uid = :uid", array(':uid' => $user->uid))->fetch();
 
-
-  // Check to see is inviter is using a fake email
-  $fakeEmail = preg_match('/anon@galv.world/', $email);
-
-  // This sends to the user's privatemsg account. Only allow private messages to be sent if user has not disbaled it in their profile page.
-  if ($webRTCpmOFF !== false) {
-    // Don't send a private message.
-  }
-  else if (module_exists('privatemsg')) {
-    privatemsg_new_thread(array(user_load($user->uid)), $params['subject'], $params['message']);
-  }
-  //Check if inviter is using privatemsg for WebRTC invites
-  if (module_exists('galv_fake_email') && $fakeEmail == TRUE) {
-    // Don't let them send an email.
-  }
-  else {
-    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
-  }
-
+  schedule_check_private_message_for_scheduling($user, $email, $params);
 
   // THIS IS WHAT I HAD BEFORE.
   /*
@@ -379,29 +372,30 @@ function schedule_form_submit($form, &$form_state) {
       ->execute();
 
 
-    // Check to see if each invitee has already received an invitation.  If they have and the invitaiton has changed, send an update message
-    //Note to me: get toekn, uid and sid
+    // Check to see if each invitee has already received an invitation.  If they have and the invitation has changed, send an update message
     //You will also need to edit the email message that is sent to the scheduler to show that the message ahs ben edited
 
-    $inviteExists = db_query("SELECT token, recipients_uid, sid
-                      FROM conference_confirmation
-                      WHERE sid = :sid", array(':sid' => $schedule->sid))->fetch();
-
-
-    // Check if schedule is new or is being updated
-   /*
-    if ($schedule->created == $schedule->changed) {
-      // Don't send an email becasue the schedule is not being updated, it's being created.
-    }
-  */
-
-      // Check if inviter has added new invitees.
-      $newNumbOfInvitees = db_query("SELECT sid, recipients_uid
-                      FROM conference_confirmation
+    $inviteesExists = db_query("SELECT recipients_uid
+                      FROM {conference_confirmation}
                       WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
-      // Count $numberOfInvitees
-      $newCountInvitees = count($newNumbOfInvitees);
 
+    foreach ($inviteesExists as $inviteeExistUid ) {
+      $get_recipients_uid[$inviteeExistUid->recipients_uid] = $inviteeExistUid->recipients_uid;
+    }
+
+
+   // Get what's in form state
+   $InFormState = $form_state['values']['field_users']['und'];
+
+    $fieldUserNewArray = array();
+    foreach ($InFormState as $field_user) {
+      if (!is_null($field_user['uid'])) {
+        $fieldUserNewArray[$field_user['uid']] = $field_user['uid'];
+      }
+    }
+
+    // Get the difference between who was already invited and who is being invited now
+   $checkInviteeDiff = array_diff_key($fieldUserNewArray, $get_recipients_uid);
 
       //Get description if there is one.
       if ($form_state['values']['description'] == '') {
@@ -411,7 +405,7 @@ function schedule_form_submit($form, &$form_state) {
       $email = $value->mail;
 
 
-      if (isset($inviteExists->token) && ($schedule->created != $schedule->changed) ) {
+      if (isset($inviteesExists->token) && ($schedule->created != $schedule->changed) ) {
         // Create invitee message.
         $inviteeMessage = $user->name;
         $inviteeMessage .= ' has UPDATED video conference ';
@@ -505,3 +499,28 @@ function schedule_delete_form_submit($form, &$form_state) {
   $form_state['redirect'] = '<front>';
 }
 
+function schedule_check_private_message_for_scheduling($user, $email, $params) {
+  // Check if the inviter turned privatemsg for WebRTC off in User Profile form
+  $webRTCpmOFF = db_query("SELECT uid
+                             FROM {webrtc_pm}
+                             WHERE uid = :uid", array(':uid' => $user->uid))->fetch();
+
+
+  // Check to see is inviter is using a fake email
+  $fakeEmail = preg_match('/anon@galv.world/', $email);
+
+  // This sends to the user's privatemsg account. Only allow private messages to be sent if user has not disabled it in their profile page.
+  if ($webRTCpmOFF != false) {
+    // Don't send a private message.
+  }
+  else if (module_exists('privatemsg')) {
+    privatemsg_new_thread(array(user_load($user->uid)), $params['subject'], $params['message']);
+  }
+  //Check if inviter is using privatemsg for WebRTC invites
+  if (module_exists('galv_fake_email') && $fakeEmail == TRUE) {
+    // Don't let them send an email.
+  }
+  else {
+    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+  }
+}
