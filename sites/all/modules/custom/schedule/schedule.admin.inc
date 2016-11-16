@@ -303,7 +303,7 @@ function schedule_form_submit($form, &$form_state) {
     $inviterMessage .= '<div>Date and time: </div>';
     $inviterMessage .= $nice_time;
     $inviterMessage .= ' UTC.';
-    $inviterMessage .= '<div>' . t('To edit your video conference, please visit') . '</div>';
+    $inviterMessage .= '<div>' . t('To edit your video conference, please visit ') . '</div>';
     $inviterMessage .= l($text, $path);
 
 
@@ -342,7 +342,7 @@ function schedule_form_submit($form, &$form_state) {
       'X-Mailer' => 'Drupal'
     );
   }
-
+  // This send and email and/or a private message depending on the inviter's profile configurations.
   schedule_check_private_message_for_scheduling($user, $email, $params);
 
   // THIS IS WHAT I HAD BEFORE.
@@ -397,6 +397,7 @@ function schedule_form_submit($form, &$form_state) {
     // Get the difference between who was already invited and who is being invited now
    $checkInviteeDiff = array_diff_key($fieldUserNewArray, $get_recipients_uid);
 
+
       //Get description if there is one.
       if ($form_state['values']['description'] == '') {
         $form_state['values']['description'] = t($user->name . ' did not include a description of this conference.');
@@ -447,10 +448,15 @@ function schedule_form_submit($form, &$form_state) {
         $params['message'] = $inviteeMessage;
       }
 
+      // This send and email and/or a private message depending on the invitee's profile configurations.
+      schedule_check_private_message_for_scheduling($value, $email, $params);
+
+    /*
       if (module_exists('privatemsg')) {
         privatemsg_new_thread(array($value), $params['subject'], $params['message']);
       }
       drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+    */
     }
 
     //$schedule_uri = entity_uri('schedule', $schedule);
@@ -510,14 +516,14 @@ function schedule_check_private_message_for_scheduling($user, $email, $params) {
   $fakeEmail = preg_match('/anon@galv.world/', $email);
 
   // This sends to the user's privatemsg account. Only allow private messages to be sent if user has not disabled it in their profile page.
-  if ($webRTCpmOFF != false) {
+  if ($webRTCpmOFF == TRUE) {
     // Don't send a private message.
   }
-  else if (module_exists('privatemsg')) {
+  else if ($webRTCpmOFF == FALSE && module_exists('privatemsg')) {
     privatemsg_new_thread(array(user_load($user->uid)), $params['subject'], $params['message']);
   }
   //Check if inviter is using privatemsg for WebRTC invites
-  if (module_exists('galv_fake_email') && $fakeEmail == TRUE) {
+  if ($fakeEmail == TRUE) {
     // Don't let them send an email.
   }
   else {
