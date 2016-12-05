@@ -208,12 +208,17 @@ function conf_confirm_form_submit($form, &$form_state) {
     $params['subject'] = ($responseExists->time_responded != NULL) ? $theInvitee->name . t(' has changed his/her response to your invitation') : t(' has responded to your invitation');
     $params['message'] = $inviterMessage;
 
+
+    module_load_include('inc', 'schedule', 'schedule.admin');
+    schedule_check_private_message_for_scheduling($theInviter, $email, $params);
+
     // Check if private message is being used.
+/*
     if (module_exists('privatemsg')) {
       privatemsg_new_thread(array($theInviter), $params['subject'], $params['message']);
     }
     // Send email.
-    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
+    drupal_mail('schedule', 'email_sender', $email, language_default(), $params);*/
   }
 }
 

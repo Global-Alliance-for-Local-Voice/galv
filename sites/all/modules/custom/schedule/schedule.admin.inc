@@ -191,23 +191,14 @@ function schedule_form_validate($form, &$form_state) {
  * Schedule submit handler.
  */
 function schedule_form_submit($form, &$form_state) {
-  //$schedule = $form_state['values'];
-
-  // Function to only allow private messages to be sent for scheduling if user has not disabled it in their profile page
-
 
   $schedule = $form_state['schedule'];
 
-  // I have this a few lines down too. I'm just doing this to get the sid.
-  /*
-  entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
-
-  schedule_save($schedule);
-*/
   $conftime = $form_state['values']['field_schedulewebrtc']['und'][0]['value'];
 
-  //Count number of users already invited so I can see if the inviter is adding updating invite.
-  /*
+  // Count number of users already invited so I can see if the inviter is adding updating invite.
+  // Keep this query to use to differentiate between invitees already invited and a new invitation
+ /*
   $numberOfInvitees = db_query("SELECT sid, recipients_uid
                       FROM conference_confirmation
                       WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
@@ -215,29 +206,13 @@ function schedule_form_submit($form, &$form_state) {
 
   // Get count of invitees
   $countInvitees = count($numberOfInvitees);
+  */
 
-*/
-
-
-  // Get date value without pesky [und] (Und will break if this site is translated.)
-  //$confDateInfo = field_view_field('schedule', $form_state['schedule'], 'field_schedulewebrtc');
-
-  //$confDateInfo = field_view_value('schedule', $schedule, 'field_schedulewebrtc');
-
-  //$confDate = isset($confDateInfo['#items']) ? $confDateInfo['#items'][0]['value'] : '';
-
- entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
+  entity_form_submit_build_entity('schedule', $schedule, $form, $form_state);
 
   schedule_save($schedule);
   $schedule_uri = entity_uri('schedule', $schedule);
 
-  // Get new number of invitees to se if anyone was added during editing
-  /*
-  $newNumberOfInvitees = db_query("SELECT sid, recipients_uid
-                      FROM conference_confirmation
-                      WHERE sid = :sid", array(':sid' => $schedule->sid))->fetchAll();
-
-  $secondCountInvitees = count($newNumberOfInvitees);*/
 
   // Send email.
   global $user;
@@ -252,12 +227,14 @@ function schedule_form_submit($form, &$form_state) {
   // Get uids of each user so you can run user_load_multiple().
   $uids = array();
 
+
   foreach ($form_state['values']['field_users']['und'] as $key => $uid) {
 
     if (!is_null($uid['uid'])) {
       $uids[$key] = $uid['uid'];
     }
   }
+
 
 
   // Query to see if which invitees are already in the db.
@@ -270,9 +247,8 @@ function schedule_form_submit($form, &$form_state) {
     }
 
     if (isset($gotInviteesUid) ? $inviteesUid : '');
-   // $gotInviteesUid = $inviteesUid;
 
-  //$accounts = user_load_multiple($uids = array());
+
   $accounts = user_load_multiple($uids);
   $name = !empty($uids) ? '<ul>' : '';
   foreach ($uids as $uid) {
@@ -283,8 +259,6 @@ function schedule_form_submit($form, &$form_state) {
   $name .= !empty($uids) ? '</ul>' : '';
 
   // Change time into unix so that I can change the time format.
-  //$timestamp = time($form_state['values']['field_schedulewebrtc']['und'][0]['value']);
-  //$timestamp = time($form_state['confdate']);
   $timestamp = strtotime($conftime);
 
   // Create new date format.
@@ -372,8 +346,8 @@ function schedule_form_submit($form, &$form_state) {
       ->execute();
 
 
-    // Check to see if each invitee has already received an invitation.  If they have and the invitation has changed, send an update message
-    //You will also need to edit the email message that is sent to the scheduler to show that the message ahs ben edited
+    // Check to see if each invitee has already received an invitation.  If they have and the invitation has changed, send an update message.
+    // You will also need to edit the email message that is sent to the scheduler to show that the message ahs ben edited
 
     $inviteesExists = db_query("SELECT recipients_uid
                       FROM {conference_confirmation}
@@ -384,7 +358,7 @@ function schedule_form_submit($form, &$form_state) {
     }
 
 
-   // Get what's in form state
+   // Get what's in form state.
    $InFormState = $form_state['values']['field_users']['und'];
 
     $fieldUserNewArray = array();
@@ -394,19 +368,22 @@ function schedule_form_submit($form, &$form_state) {
       }
     }
 
-    // Get the difference between who was already invited and who is being invited now
-   $checkInviteeDiff = array_diff_key($fieldUserNewArray, $get_recipients_uid);
+    // Load all the invitees's info
+    $inviteeInfo = user_load_multiple($fieldUserNewArray);
 
 
-      //Get description if there is one.
+    // Keep this for later. It gets the difference between who was already invited and who is being invited now.
+    // $checkInviteeDiff = array_diff_key($fieldUserNewArray, $get_recipients_uid);
+
+
+      // Get description if there is one.
       if ($form_state['values']['description'] == '') {
         $form_state['values']['description'] = t($user->name . ' did not include a description of this conference.');
       }
 
       $email = $value->mail;
 
-
-      if (isset($inviteesExists->token) && ($schedule->created != $schedule->changed) ) {
+     if ($schedule->created != $schedule->changed) { // I need to add something about the
         // Create invitee message.
         $inviteeMessage = $user->name;
         $inviteeMessage .= ' has UPDATED video conference ';
@@ -419,7 +396,13 @@ function schedule_form_submit($form, &$form_state) {
         $inviteeMessage .= ' UTC.';
         $inviteeMessage .= '<div>Description: </div>';
         $inviteeMessage .= $form_state['values']['description'];
-        $inviteeMessage .= '<div>If you would like to change your response, please do so below.</div>';
+        $inviteeMessage .= 'The following users have been invited: ';
+        $inviteeMessage .= '<ul>';
+        foreach ($inviteeInfo as $inviteeNames ) {
+         $inviteeMessage .= '<li>' . $inviteeNames->name . '</li>';
+        }
+       $inviteeMessage .= '</ul>';
+       $inviteeMessage .= '<div>If you would like to change your response, please do so below.</div>';
         $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
           l('no', 'conf_confirm/response/0/' . $token) . ' ' .
           l('maybe', 'conf_confirm/response/2/' . $token);
@@ -437,9 +420,15 @@ function schedule_form_submit($form, &$form_state) {
         $inviteeMessage .= ' on ';
         $inviteeMessage .= $nice_time;
         $inviteeMessage .= ' UTC.';
-        $inviteeMessage .= '<div>Description: </div>';
+        $inviteeMessage .= '<div class="invitee-description">Description: </div>';
         $inviteeMessage .= $form_state['values']['description'];
-        $inviteeMessage .= '<div>Will you attend?</div>';
+        $inviteeMessage .= 'The following users have been invited: ';
+        $inviteeMessage .= '<ul>';
+        foreach ($inviteeInfo as $inviteeNames) {
+          $inviteeMessage .= '<li>' . $inviteeNames->name . '</li>';
+        }
+        $inviteeMessage .= '</ul>';
+        $inviteeMessage .= '<div class="invitee-attend">Will you attend?</div>';
         $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
           l('no', 'conf_confirm/response/0/' . $token) . ' ' .
           l('maybe', 'conf_confirm/response/2/' . $token);
@@ -451,15 +440,7 @@ function schedule_form_submit($form, &$form_state) {
       // This send and email and/or a private message depending on the invitee's profile configurations.
       schedule_check_private_message_for_scheduling($value, $email, $params);
 
-    /*
-      if (module_exists('privatemsg')) {
-        privatemsg_new_thread(array($value), $params['subject'], $params['message']);
-      }
-      drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
-    */
     }
-
-    //$schedule_uri = entity_uri('schedule', $schedule);
 
     $form_state['redirect'] = $schedule_uri['path'];
 
@@ -530,3 +511,4 @@ function schedule_check_private_message_for_scheduling($user, $email, $params) {
     drupal_mail('schedule', 'email_sender', $email, language_default(), $params);
   }
 }
+
