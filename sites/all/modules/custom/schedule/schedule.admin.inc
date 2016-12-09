@@ -384,6 +384,11 @@ function schedule_form_submit($form, &$form_state) {
 
       $email = $value->mail;
 
+    // Trying to set the yes path for pantheon
+    $yesPath = $GLOBALS['base_url'] . '/conf_confirm/response/1/';
+    $noPath = $GLOBALS['base_url'] . '/conf_confirm/response/0/';
+    $maybePath = $GLOBALS['base_url'] . '/conf_confirm/response/2/';
+
      if ($schedule->created != $schedule->changed) { // I need to add something about the
         // Create invitee message.
         $inviteeMessage = $user->name;
@@ -404,9 +409,9 @@ function schedule_form_submit($form, &$form_state) {
         }
        $inviteeMessage .= '</ul>';
        $inviteeMessage .= '<div>If you would like to change your response, please do so below.</div>';
-        $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
-          l('no', 'conf_confirm/response/0/' . $token) . ' ' .
-          l('maybe', 'conf_confirm/response/2/' . $token);
+        $inviteeMessage .= l('yes', $yesPath . $token) . ' ' .
+          l('no', $noPath . $token) . ' ' .
+          l('maybe', $maybePath . $token);
         $params = array();
         $params['subject'] = t('Video Conference ' . $form_state['values']['title'] . ' has been UPDATED');
         $params['message'] = $inviteeMessage;
@@ -430,9 +435,9 @@ function schedule_form_submit($form, &$form_state) {
         }
         $inviteeMessage .= '</ul>';
         $inviteeMessage .= '<div class="invitee-attend">Will you attend?</div>';
-        $inviteeMessage .= l('yes', 'conf_confirm/response/1/' . $token) . ' ' .
-          l('no', 'conf_confirm/response/0/' . $token) . ' ' .
-          l('maybe', 'conf_confirm/response/2/' . $token);
+        $inviteeMessage .= l('yes', $yesPath . $token) . ' ' .
+          l('no', $noPath . $token) . ' ' .
+          l('maybe', $maybePath . $token);
         $params = array();
         $params['subject'] = t('Your have been invited to a video conference');
         $params['message'] = $inviteeMessage;
