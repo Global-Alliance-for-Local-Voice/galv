@@ -194,7 +194,9 @@ function conf_confirm_form_submit($form, &$form_state) {
 
     // Get schedule entity path for message.
     $text = $inviteeResponse->title;
-    $path = 'schedule/' . $inviteeResponse->sid;
+    //$path = 'schedule/' . $inviteeResponse->sid;
+    $path = $GLOBALS['base_url'] . '/schedule/' . $inviteeResponse->sid;
+
 
     $inviterMessage = $theInvitee->name;
     $inviterMessage .= ($responseExists->time_responded != NULL) ? t(' has changed his/her response to ') : t(' has responded ');

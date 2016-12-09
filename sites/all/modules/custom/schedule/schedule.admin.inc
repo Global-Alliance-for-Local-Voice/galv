@@ -222,7 +222,8 @@ function schedule_form_submit($form, &$form_state) {
 
   // Create variables for entity url in email to sender.
   $text = $form_state['values']['title'];
-  $path = 'schedule/' . $schedule->sid;
+  //$path = 'schedule/' . $schedule->sid;
+  $path = $GLOBALS['base_url'] . '/schedule/' . $schedule->sid;
 
   // Get uids of each user so you can run user_load_multiple().
   $uids = array();
