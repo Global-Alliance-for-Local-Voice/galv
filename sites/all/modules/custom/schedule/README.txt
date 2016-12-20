@@ -2,6 +2,7 @@ INFORMATION ABOUT THIS MODULE
 
 INTRODUCTION
 This module allows an authenticated user to schedule a video conference with other authenticated users.
+It also adds a checkbox to the private message form that appears in user profile. this checkbox enables users to turn off private message for Webrtc, as long as they don't have a fake email address.
 
 To Schedule a video conference, go to the User Menu, which will appear on the front page after you log in, and click on the "Schedule a Live Video Conference" menu link.
 From here, fill out the form and submit.
@@ -39,14 +40,13 @@ Click on the Field Type, which will be user reference, and re-save.  The admin w
 
 @TODO
 1) In create form, change Name to Conference Title
-2) Deal with the alert to email that private message sends. (Ask Michelle about forcing people to choose between getting scheduling messages via email or via p.mm-- not both.
-   We could add that configuration to the user account edit page.
-3) Uninstall html mail
-4) Put if no private message conditional
-5) Get rid of 1 of the invitees select boxes.  (You should only have 5)
-6) Ask Michelle if I can make a nicer access denied page.
-7) Get rid of uid in selected users select box, and fix admin instructions about what to do if auto-complete is not working in select box.
-9) Connect to Becca's WebRTC site
-10) Write new email to inviter (person requesting the conference) with invitees's responses, and add their responses to the inviter's entity page.  (This is the page that is created when the schedule is created.
-    The address of this page is emailed to the inviter.)
-
+2) Get rid of uid in selected users select box.
+3) Connect to Becca's WebRTC site
+4) Change the name of 'created' field in the conference_confirmation table to be scheduled since this column shows the date the WebRTC conference is scheduled
+   (When this is change is made, be sure to check all queries and test carefully.)
+5) In the conference_confirmation table, set the 'responded' column to not null, so as not to cause confusion down the road when working with variables. (Kellen's suggestion)
+   (Be sure to test well after making this change.)
+6) Move all private message code (Everything in the hook_form_alter for the user_profile_form) into the galv_fake_email module.
+7) Fix html issue for all private messages that come from the scheduling module and the conf_confirm module.  My advice is
+   to select a theme that you want to use, and then use drupal's documented procedures to copy the template files you need to change, and add css.
+   Here's info on how to make a sub theme: https://www.drupal.org/docs/7/theming/creating-a-sub-theme
