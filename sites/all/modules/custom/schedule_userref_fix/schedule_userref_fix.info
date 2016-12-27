@@ -1,0 +1,10 @@
+name = Scheduling User Reference Fix
+description = Exclude uids in user reference fields in schedule module
+package = GALV
+core = 7.x
+
+dependencies[] = user_reference
+dependencies[] = schedule
+
+
+

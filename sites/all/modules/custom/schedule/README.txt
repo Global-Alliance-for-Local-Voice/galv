@@ -39,14 +39,14 @@ If you are unable to get the autoselect to work for the Selected Users auto comp
 Click on the Field Type, which will be user reference, and re-save.  The admin will only have to do this the first time the module is installed.
 
 @TODO
-1) In create form, change Name to Conference Title
-2) Get rid of uid in selected users select box.
-3) Connect to Becca's WebRTC site
-4) Change the name of 'created' field in the conference_confirmation table to be scheduled since this column shows the date the WebRTC conference is scheduled
+
+1) Make Invitee's scheduled comments show for Inviter when the Inviter visits the invitation they've created.  (This is an easy fix for the next coder.)
+2) Connect to Becca's WebRTC site
+3) Change the name of 'created' field in the conference_confirmation table to be scheduled since this column shows the date the WebRTC conference is scheduled
    (When this is change is made, be sure to check all queries and test carefully.)
-5) In the conference_confirmation table, set the 'responded' column to not null, so as not to cause confusion down the road when working with variables. (Kellen's suggestion)
+4) In the conference_confirmation table, set the 'responded' column to not null, so as not to cause confusion down the road when working with variables. (Kellen's suggestion)
    (Be sure to test well after making this change.)
-6) Move all private message code (Everything in the hook_form_alter for the user_profile_form) into the galv_fake_email module.
-7) Fix html issue for all private messages that come from the scheduling module and the conf_confirm module.  My advice is
+5) Move all private message code (Everything in the hook_form_alter for the user_profile_form) into the galv_fake_email module.
+6) Fix html issue for all private messages that come from the scheduling module and the conf_confirm module.  My advice is
    to select a theme that you want to use, and then use drupal's documented procedures to copy the template files you need to change, and add css.
    Here's info on how to make a sub theme: https://www.drupal.org/docs/7/theming/creating-a-sub-theme

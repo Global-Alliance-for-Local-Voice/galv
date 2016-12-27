@@ -1,0 +1,83 @@
+<?php
+/**
+ * Implmentation of hook_menu_alter().
+ */
+function schedule_userref_fix_menu_alter(&$items) {
+  $items['user_reference/autocomplete/%/%/%']['page callback'] = 'schedule_userref_fix_new_userreference_autocomplete';
+}
+
+
+/**
+ * Menu callback; Retrieve a pipe delimited string of autocomplete suggestions for existing users
+ */
+function schedule_userref_fix_new_userreference_autocomplete($entity_type, $bundle, $field_name, $string = '') {
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
+
+  $options = array(
+    'string' => $string,
+    'match' => $instance['widget']['settings']['autocomplete_match'],
+    'limit' => 10,
+  );
+  $references = user_reference_potential_references($field, $options);
+
+  $matches = array();
+  foreach ($references as $id => $row) {
+    // Markup is fine in autocompletion results (might happen when rendered
+    // through Views) but we want to remove hyperlinks.
+    $suggestion = preg_replace('/<a href="([^<]*)">([^<]*)<\/a>/', '$2', $row['rendered']);
+    // Remove link tags Add a class wrapper for a few required CSS overrides.
+    $matches[$row['title']] = '<div class="reference-autocomplete">' . $suggestion . '</div>';
+  }
+  drupal_json_output($matches);
+
+
+
+}
+
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+
+function schedule_userref_fix_field_widget_form_alter(&$element, &$form_state, $context) {
+
+  // Check if $form_state['field']['field_users'] exists
+  if (!isset($form_state['field']['field_users'])) {
+    // Do nothing.
+  }
+  else {
+    if ($form_state['field']['field_users']['und']['instance']['widget']['type'] == 'user_reference_autocomplete') {
+      $element['uid']['#value_callback'] = 'maija_user_reference_autocomplete_value';
+    }
+
+
+  }
+
+}
+
+
+/**
+ * Value callback for a user_reference autocomplete element.
+ *
+ * Substitute in the user name for the uid.
+ */
+function maija_user_reference_autocomplete_value($element, $input = FALSE, $form_state) {
+  if ($input === FALSE) {
+    // We're building the displayed 'default value': expand the raw uid into
+    // "user name [uid:n]".
+    $uid = $element['#default_value'];
+    if (!empty($uid)) {
+      $q = db_select('users', 'u');
+      $q->addField('u', 'name');
+
+      $q->condition('u.uid', $uid)
+        ->range(0, 1);
+      $result = $q->execute();
+      // @todo If no result (user doesn't exist).
+      $value = $result->fetchField();
+      //$value .= ' [uid:' . $uid . ']';
+      return $value;
+    }
+  }
+}

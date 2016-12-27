@@ -139,6 +139,7 @@ function schedule_menu() {
       'access arguments' => array('create', 'schedule', $type),
       'file' => 'schedule.admin.inc',
       'menu_name' => 'user-menu', // Add to user-menu.
+      'weight' => -47,
       'type' => MENU_NORMAL_ITEM,
     );
   }
@@ -152,6 +153,7 @@ function schedule_menu() {
     'type' => MENU_NORMAL_ITEM,
     'file' => 'schedule.admin.inc',
   );
+
 
   return $items;
 }
@@ -463,7 +465,7 @@ function schedule_theme($existing, $type, $theme, $path) {
  * Implements hook_form_alter().
  */
 function schedule_form_alter(&$form, &$form_state, $form_id) {
-
+  //drupal_set_message($form_id);
   if ($form_id == 'user_profile_form') {
 
     $myUser = $form_state['user']->uid;
@@ -523,7 +525,6 @@ function schedule_form_alter(&$form, &$form_state, $form_id) {
       );
     }
   }
-
 
 }
 
