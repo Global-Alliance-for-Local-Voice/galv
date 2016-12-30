@@ -136,13 +136,13 @@ function schedule_form($form, &$form_state, $schedule) {
   $form['title'] = array(
     '#type' => 'textfield',
     '#required' => TRUE,
-    '#title' => t('Name'),
+    '#title' => t('WebRTC Conference Title'),
     '#default_value' => $schedule->title,
   );
 
   $form['description'] = array(
     '#type' => 'textarea',
-    '#title' => t('Description'),
+    '#title' => t('WebRTC Conference Description'),
     '#default_value' => $schedule->description,
   );
 
