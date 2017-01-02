@@ -439,11 +439,11 @@ function schedule_form_submit($form, &$form_state) {
           l('no', $noPath . $token) . ' ' .
           l('maybe', $maybePath . $token);
         $params = array();
-        $params['subject'] = t('Your have been invited to a video conference');
+        $params['subject'] = t('You have been invited to a video conference');
         $params['message'] = $inviteeMessage;
       }
 
-      // This send and email and/or a private message depending on the invitee's profile configurations.
+      // This send an email and/or a private message depending on the invitee's profile configurations.
       schedule_check_private_message_for_scheduling($value, $email, $params);
 
     }

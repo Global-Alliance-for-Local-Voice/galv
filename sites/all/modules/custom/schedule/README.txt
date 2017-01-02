@@ -50,3 +50,4 @@ Click on the Field Type, which will be user reference, and re-save.  The admin w
 6) Fix html issue for all private messages that come from the scheduling module and the conf_confirm module.  My advice is
    to select a theme that you want to use, and then use drupal's documented procedures to copy the template files you need to change, and add css.
    Here's info on how to make a sub theme: https://www.drupal.org/docs/7/theming/creating-a-sub-theme
+7) Add validation in schedule.admin.inc.  You should put this in the schedule_form_validate function (ln 186).  Make an error appear if the user tries to invite herself to a video conference.

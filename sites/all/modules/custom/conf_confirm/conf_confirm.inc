@@ -207,7 +207,7 @@ function conf_confirm_form_submit($form, &$form_state) {
     $inviterMessage .= l($text, $path);
 
     $params = array();
-    $params['subject'] = ($responseExists->time_responded != NULL) ? $theInvitee->name . t(' has changed his/her response to your invitation') : t(' has responded to your invitation');
+    $params['subject'] = ($responseExists->time_responded != NULL) ? $theInvitee->name . t(' has changed his/her response to your invitation') : $theInvitee->name . t(' has responded to your invitation');
     $params['message'] = $inviterMessage;
 
 
